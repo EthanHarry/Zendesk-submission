@@ -139,7 +139,7 @@
         </a> -->
       </div>
       {{#if page_articles}}
-      <div class="o-inputwith-icon o-inputwith-icon--hasaction o-inputwith-icon--muted u-width-midWidth u-marginHorizontal-4x  js-{{page}} js-search">
+      <!-- <div class="o-inputwith-icon o-inputwith-icon--hasaction o-inputwith-icon--muted u-width-midWidth u-marginHorizontal-4x  js-{{page}} js-search">
         <svg viewBox="0 0 16 16" class="o-inputwith-icon__symbol">
           <path class="o-icon" d="M11.429 10.057h-0.686l-0.229-0.114c0.914-1.143 1.371-2.4 1.371-3.886 0.114-3.429-2.629-6.057-5.943-6.057s-5.943 2.629-5.943 5.943 2.629 5.943 5.943 5.943c1.486 0 2.857-0.571 3.886-1.371l0.229 0.229v0.686l4.571 4.571 1.371-1.371-4.571-4.571zM5.943 10.057c-2.4 0-4.114-1.829-4.114-4.114s1.829-4.114 4.114-4.114 4.114 1.829 4.114 4.114-1.829 4.114-4.114 4.114z"></path>
         </svg>
@@ -149,7 +149,7 @@
             <path d="M8 5.905l-5.905-5.714-2.095 2.095 5.714 5.905-5.333 5.333 2.095 2.286 5.524-5.524 5.524 5.524 2.095-2.286-5.524-5.333 5.905-5.905-2.286-2.095-5.714 5.714z"/>
           </svg>
         </a>
-      </div>
+      </div> -->
         <a href="#" title="Fetch data from Qordoba" class="o-link u-height-7x u-lineHeight-7x u-float-right js-{{page}} js-refresh">
           <svg viewBox="0 0 16 16" class="o-icon u-marginRight-1x">
             <path class="path1" d="M13.091 5.091l-2.909 2.909h2.182c0 2.41-1.954 4.364-4.364 4.364-0.727 0-1.433-0.182-2.036-0.509l-1.062 1.062c0.895 0.567 1.956 0.902 3.098 0.902 3.213 0 5.818-2.605 5.818-5.818h2.182zM3.636 8c0-2.41 1.954-4.364 4.364-4.364 0.727 0 1.433 0.182 2.036 0.509l1.062-1.062c-0.895-0.567-1.956-0.902-3.098-0.902-3.213 0-5.818 2.605-5.818 5.818h-2.182l2.909 2.909 2.909-2.909z"></path>

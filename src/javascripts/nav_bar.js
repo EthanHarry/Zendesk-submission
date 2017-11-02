@@ -769,7 +769,7 @@ class NavBar {
     this.pageParams.dataset = this.zendeskArticles.articles.map((articleObject) => {
       return this.reconstructZendeskArticleObject(articleObject);
     })
-    return this.view.switchTo('sync_page', this.pageParams);
+    return this.view.switchTo('QordobaHome', this.pageParams);
   }
 }
 
