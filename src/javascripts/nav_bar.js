@@ -6,7 +6,7 @@ const MAX_HEIGHT = 375;
 
 //TODO 
   
-  //Clean up article title filtering/regex (caps, punctuation, etc)
+  //Clean up article title filtering/regex (caps, punctuation, etc) -- ENSURE THAT MY RULES MATCH ZENDESK TITLING RULES
   //Handle pagination issue on Untranslated
   //Add full language names and flags to dropdowns where needed (prob seperate API call or resource)
   //Handling marked as outdated

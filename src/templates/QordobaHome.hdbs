@@ -1,24 +1,13 @@
 <div class="u-display-flex u-flexDirection-column u-box-100">
 
   <div class="u-position-relative">
-    <!-- Header: Info area -->
     <div class="c-infoarea">
       <div class="c-infoarea__section u-paddingHorizontal-gutter u-paddingTop-4x u-paddingBottom-4x u-borderBottom-divider">
         <div class="u-display-flex">
 
           <div class="u-width-7x u-marginRight-2x">
-
-
           <svg width="32px" height="32px" viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-              <g id="Symbols" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-                  <g id="Navigation-/-Top-Nav-(Reporting-selected)" transform="translate(-14.000000, -14.000000)" fill="#1B1838">
-                      <g id="Navigation-/-Top-Nav-/-Default">
-                          <g id="Logo" transform="translate(14.000000, 14.000000)">
-                              <path d="M27.1890778,27.4370299 C24.3040319,30.2598643 20.3551936,32 16,32 C7.16346507,32 0,24.8365349 0,16 C0,7.16346507 7.16346507,0 16,0 C24.8365349,0 32,7.16346507 32,16 C32,20.4712495 30.1659721,24.5141078 27.2091337,27.4173573 L24.7658283,21.2953293 C25.7086467,19.7416367 26.251497,17.9182116 26.251497,15.9680639 C26.251497,10.2886707 21.6474571,5.68463074 15.9680639,5.68463074 C10.2886707,5.68463074 5.68463074,10.2886707 5.68463074,15.9680639 C5.68463074,21.6474571 10.2886707,26.251497 15.9680639,26.251497 C17.7060918,26.251497 19.3433932,25.8203593 20.7788583,25.0591297 L27.1890778,27.4370299 Z M15.8722555,20.3113772 C13.4205828,20.3113772 11.4331337,18.3239281 11.4331337,15.8722555 C11.4331337,13.4205828 13.4205828,11.4331337 15.8722555,11.4331337 C18.3239281,11.4331337 20.3113772,13.4205828 20.3113772,15.8722555 C20.3113772,18.3239281 18.3239281,20.3113772 15.8722555,20.3113772 Z"></path>
-                          </g>
-                      </g>
-                  </g>
-              </g>
+            <path d="M27.1890778,27.4370299 C24.3040319,30.2598643 20.3551936,32 16,32 C7.16346507,32 0,24.8365349 0,16 C0,7.16346507 7.16346507,0 16,0 C24.8365349,0 32,7.16346507 32,16 C32,20.4712495 30.1659721,24.5141078 27.2091337,27.4173573 L24.7658283,21.2953293 C25.7086467,19.7416367 26.251497,17.9182116 26.251497,15.9680639 C26.251497,10.2886707 21.6474571,5.68463074 15.9680639,5.68463074 C10.2886707,5.68463074 5.68463074,10.2886707 5.68463074,15.9680639 C5.68463074,21.6474571 10.2886707,26.251497 15.9680639,26.251497 C17.7060918,26.251497 19.3433932,25.8203593 20.7788583,25.0591297 L27.1890778,27.4370299 Z M15.8722555,20.3113772 C13.4205828,20.3113772 11.4331337,18.3239281 11.4331337,15.8722555 C11.4331337,13.4205828 13.4205828,11.4331337 15.8722555,11.4331337 C18.3239281,11.4331337 20.3113772,13.4205828 20.3113772,15.8722555 C20.3113772,18.3239281 18.3239281,20.3113772 15.8722555,20.3113772 Z"></path>
           </svg>
           </div>
           <div class="u-flexGrow-1 u-color-primary">
@@ -29,7 +18,6 @@
           </div>
 
           <div class="u-display-flex u-alignItems-center">
-            <!-- Brand selection area -->
             <div class="dropdown">
               <button data-toggle="dropdown" data-button='untranslated' class='untranslated o-button dropdown-toggle' href='#'>Untranslated Articles</button>
             </div>
@@ -56,26 +44,6 @@
               <ul class="dropdown-menu u-maxWidth-midWidth o-interactive-list--highlight u-paddingBottom-none u-paddingTop-none js-{{page}}-brand"
                 style="left: auto; right: 0;"
                 role="menu" aria-labelledby="dLabel">
-
-
-
-
-<!--                 <li class="o-status is-warning u-padding-2x u-fontSize-small u-color-muted">
-                  To translate multiple langs in Zendesk, please add a Zendesk API token. <a href="https://docs.qordoba.com/integrations/zendesk#multibrand" target="_blank" rel="nofollow noreferrer" class="o-link" style="padding:0;font-size:inherit;display:inline;">Learn&nbsp;more</a>.
-                </li> -->
-
-
-<!-- {{#if has_more_langs}}
-                <li class="u-borderTop-divider">
-                  <a href="#" class="o-link u-padding-2x js-{{page}}-add-brand">
-                    <svg viewBox="0 0 16 16" width="100%" height="100%" class="o-icon u-marginRight-1x">
-                      <path class="path1" d="M7.4 7.4h-3.5v1.4h3.5v3.2h1.3v-3.2h3.3v-1.4h-3.3v-3.5h-1.3v3.5z"></path>
-                      <path class="path2" d="M8 0c-4.4 0-8 3.6-8 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zM8 14.7c-3.7 0-6.7-3-6.7-6.7s3-6.7 6.7-6.7 6.7 3 6.7 6.7-3 6.7-6.7 6.7z"></path>
-                    </svg>Translate another brand
-                  </a>
-                </li>
-{{/if}} -->
-
               </ul>
             </div>
 
@@ -139,7 +107,7 @@
         </a> -->
       </div>
       {{#if page_articles}}
-      <!-- <div class="o-inputwith-icon o-inputwith-icon--hasaction o-inputwith-icon--muted u-width-midWidth u-marginHorizontal-4x  js-{{page}} js-search">
+      <div class="o-inputwith-icon o-inputwith-icon--hasaction o-inputwith-icon--muted u-width-midWidth u-marginHorizontal-4x  js-{{page}} js-search">
         <svg viewBox="0 0 16 16" class="o-inputwith-icon__symbol">
           <path class="o-icon" d="M11.429 10.057h-0.686l-0.229-0.114c0.914-1.143 1.371-2.4 1.371-3.886 0.114-3.429-2.629-6.057-5.943-6.057s-5.943 2.629-5.943 5.943 2.629 5.943 5.943 5.943c1.486 0 2.857-0.571 3.886-1.371l0.229 0.229v0.686l4.571 4.571 1.371-1.371-4.571-4.571zM5.943 10.057c-2.4 0-4.114-1.829-4.114-4.114s1.829-4.114 4.114-4.114 4.114 1.829 4.114 4.114-1.829 4.114-4.114 4.114z"></path>
         </svg>
@@ -149,7 +117,7 @@
             <path d="M8 5.905l-5.905-5.714-2.095 2.095 5.714 5.905-5.333 5.333 2.095 2.286 5.524-5.524 5.524 5.524 2.095-2.286-5.524-5.333 5.905-5.905-2.286-2.095-5.714 5.714z"/>
           </svg>
         </a>
-      </div> -->
+      </div>
         <a href="#" title="Fetch data from Qordoba" class="o-link u-height-7x u-lineHeight-7x u-float-right js-{{page}} js-refresh">
           <svg viewBox="0 0 16 16" class="o-icon u-marginRight-1x">
             <path class="path1" d="M13.091 5.091l-2.909 2.909h2.182c0 2.41-1.954 4.364-4.364 4.364-0.727 0-1.433-0.182-2.036-0.509l-1.062 1.062c0.895 0.567 1.956 0.902 3.098 0.902 3.213 0 5.818-2.605 5.818-5.818h2.182zM3.636 8c0-2.41 1.954-4.364 4.364-4.364 0.727 0 1.433 0.182 2.036 0.509l1.062-1.062c-0.895-0.567-1.956-0.902-3.098-0.902-3.213 0-5.818 2.605-5.818 5.818h-2.182l2.909 2.909 2.909-2.909z"></path>
