@@ -1,5 +1,0 @@
-<div class='loading-div'>
-  <div class="inner-loading-div">
-    <img class="loading-img" src="../images/spinner.gif" alt="loading..." />
-  </div>
-</div>
