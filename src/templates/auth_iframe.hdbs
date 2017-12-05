@@ -1,0 +1,9 @@
+
+<iframe src="https://us-central1-qordoba-devel.cloudfunctions.net/qordoba-zendesk-user_token" frameborder="0">
+</iframe>
+<!-- <script type="text/javascript">
+  console.log('COOKIE!!!', document.cookie)
+  console.log('COOKIE!!!', document.cookie.replace(/(?:(?:^|.*;\s*)zendeskAuthToken\s*\=\s*([^;]*).*$)|^.*$/, "$1"))
+  document.cookie = 'zendeskAuthToken=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+  console.log('COOKIE!!!', document.cookie.replace(/(?:(?:^|.*;\s*)zendeskAuthToken\s*\=\s*([^;]*).*$)|^.*$/, "$1"))
+</script> -->

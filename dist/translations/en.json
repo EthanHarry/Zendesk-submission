@@ -1,0 +1,9 @@
+{
+  "_warning": "AUTOMATICALLY GENERATED FROM src/translations/en.json - DO NOT MODIFY THIS FILE DIRECTLY",
+  "app": {
+    "name": "Qordoba",
+    "short_description": "Intelligent localization for your Help Center articles",
+    "long_description": "Qordoba is a SaaS solution that is trusted by some of the most forward-thinking global companies to internationalize their products and content.\nCombine Qordoba's localization platform with Zendesk to seamlessly add multilingual articles to your Help Center. Simply download our app from the Zendesk Marketplace, link an existing Qordoba project to your Zendesk Support account, and select an article to send to Qordoba.\nWhen articles are received by Qordoba, your translators will be notified that they have new content to work on. When they finish, return to the Qordoba app in Zendesk to see the published articles! Note: translated articles will not be published in Zendesk Help Centeruntil the English source article is published.\nVisit www.qordoba.com for more information.",
+    "installation_instructions": "1. Create a new project in Qordoba (see www.qordoba.com for more). \n 2. Download Qordoba's app from the Zendesk Marketplace \n 3. Copy and paste your token, Organization ID, and Project ID from your Qordoba project configuration into their respective fields in your Qordoba - Zendesk app setup."
+  }
+}

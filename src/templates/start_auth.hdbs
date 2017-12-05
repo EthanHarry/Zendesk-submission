@@ -1,0 +1,31 @@
+<!-- <script type="text/javascript">
+  console.log('requesting zd perm')
+  var url = `ethanhelp.zendesk.com/oauth/authorizations/new?response_type=code&redirect_uri=http://localhost:3000/handle_decision&client_id=qordoba_integration_for_zendesk&scope=hc:read%20write`
+  console.log('redirect url', url)
+  window.location.assign(url)
+</script> -->
+<!-- <iframe src="http://localhost:3000/zendesk_auth" frameborder="0">
+</iframe> -->
+
+
+  <a id="start-auth" href='https://us-central1-qordoba-devel.cloudfunctions.net/qordoba-zendesk-zendesk_auth?initial_brand_name={{initial_brand_name}}&client_id={{client_id}}' target="_blank">
+    Start Zendesk Auth
+  </a>
+
+  <!-- <a id="start-auth" href="http://localhost:3000/zendesk_auth" target="_blank">
+    Start Zendesk Auth
+  </a> -->
+
+
+
+  <!-- console.log('omg')
+  $.ajax({
+    type:'GET',
+    url: `http://localhost:3000/zendesk_auth`
+  })
+  window.location.assign(`https://ethanhelp.zendesk.com/oauth/authorizations/new?response_type=code&redirect_uri=http://localhost:3000/handle_decision&client_id=qordoba_integration_for_zendesk&scope=hc:read%20write`)
+  // window.location.assign(`http://localhost:3000/zendesk_auth`)
+    console.log('omg') -->
+
+
+  
