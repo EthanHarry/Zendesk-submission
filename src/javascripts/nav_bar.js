@@ -160,14 +160,17 @@ class NavBar {
       this.langCode = this.pageParams.currentLanguageLocale.slice(0,2);
       this.localeCode = this.pageParams.currentLanguageLocale.slice(3,5);
       this.zendeskLocale = `${this.langCode}-${this.localeCode}`;
-    }
-    var qordobaLanguageIdObj = this.qordobaProjectActiveLanguages[`${this.langCode}-${this.localeCode}`] || this.qordobaProjectActiveLanguages[this.pageParams.currentLanguageLocale];
-    if (qordobaLanguageIdObj && qordobaLanguageIdObj.id) {
-      this.qordobaLanguageId = qordobaLanguageIdObj.id;
-      this.qordobaLanguageFullName = qordobaLanguageIdObj.fullName;
+      var qordobaLanguageIdObj = this.qordobaProjectActiveLanguages[`${this.langCode}-${this.localeCode}`] || this.qordobaProjectActiveLanguages[this.pageParams.currentLanguageLocale];
+      if (qordobaLanguageIdObj && qordobaLanguageIdObj.id) {
+        this.qordobaLanguageId = qordobaLanguageIdObj.id;
+        this.qordobaLanguageFullName = qordobaLanguageIdObj.fullName;
+      }
+      else {
+        this.client.invoke('notify', 'Error matching languages to Qordoba. Please confirm all languages in Zendesk match a language-locale in Qordoba', 'error')
+      }
     }
     else {
-      this.client.invoke('notify', 'Error matching languages to Qordoba. Please confirm all languages in Zendesk match a language-locale in Qordoba', 'error')
+      this.client.invoke('notify', 'Found a language with no locale, which is currently not supported by Qordoba. Please visit Zendesk settings and ensure all languages have locales.', 'error')
     }
   }
 
@@ -216,6 +219,15 @@ class NavBar {
         this.zendeskParentResources[id].description = parentList[i].description;
         this.zendeskParentResources[id].url = parentList[i].html_url;
       }
+
+      if (Object.keys(this.zendeskParentResources).length === 0) {
+        if (this.pageType === 'articles') {
+          this.client.invoke('notify', 'Error fetching sections. Please make sure all articles belong to sections, and all sections are published.', 'error')
+        }
+        else {
+          this.client.invoke('notify', 'Error fetching categories. Please make sure all sections belong to categories, and all categories are published.', 'error')
+        }
+      }
     }
 
 
@@ -224,6 +236,7 @@ class NavBar {
     this.pageParams.prevPageEnabled = this.pageNumber > 1;
     this.pageParams.nextPageEnabled = this.pageNumber < totalPageCount;
     this.pageParams.dataset = [];
+
   }
 
   async publishZendeskResources(completeZipFile) {
@@ -312,7 +325,6 @@ class NavBar {
       this.pageNumber = 1;
       this.init();
     })
-    // this.view.switchTo('QordobaHome');
   }
 
 
@@ -371,6 +383,7 @@ class NavBar {
       }
       catch(err) {
         throw new Error('Error searching:', err)
+        this.client.invoke('notify', 'No search results found', 'error')
         this.zendeskSearchTerm = '';
         this.init();
       }
