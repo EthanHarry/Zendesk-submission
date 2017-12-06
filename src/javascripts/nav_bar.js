@@ -162,8 +162,13 @@ class NavBar {
       this.zendeskLocale = `${this.langCode}-${this.localeCode}`;
     }
     var qordobaLanguageIdObj = this.qordobaProjectActiveLanguages[`${this.langCode}-${this.localeCode}`] || this.qordobaProjectActiveLanguages[this.pageParams.currentLanguageLocale];
-    this.qordobaLanguageId = qordobaLanguageIdObj.id;
-    this.qordobaLanguageFullName = qordobaLanguageIdObj.fullName;
+    if (qordobaLanguageIdObj && qordobaLanguageIdObj.id) {
+      this.qordobaLanguageId = qordobaLanguageIdObj.id;
+      this.qordobaLanguageFullName = qordobaLanguageIdObj.fullName;
+    }
+    else {
+      this.client.invoke('notify', 'Error matching languages to Qordoba. Please confirm all languages in Zendesk match a language-locale in Qordoba', 'error')
+    }
   }
 
 
