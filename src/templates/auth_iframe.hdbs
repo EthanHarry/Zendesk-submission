@@ -1,6 +1,5 @@
-
+<div class="inner-loading-div">
+  <img class="loading-img" src="../images/spinner.gif" alt="loading..." />
+</div>
 <iframe src="https://us-central1-qordoba-devel.cloudfunctions.net/qordoba-zendesk-user_token" frameborder="0">
 </iframe>
-<!-- <script type="text/javascript">
-  document.cookie = 'zendeskAuthToken=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-</script> -->
