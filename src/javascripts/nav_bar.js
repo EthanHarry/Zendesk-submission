@@ -4,10 +4,6 @@ var newZip = new JSZip();
 
 const MAX_HEIGHT = 375;
 
-//TODO 
-
-  //Error handling -- hit the important parts
-
   //FUTURE
   //Dont call for languages and brands every time we re-init -- you already have them
   //Work on signle source of truth for data -- dont need pageparams to be seperate from actual data
@@ -121,7 +117,7 @@ class NavBar {
 
   async checkOAuthToken() {
     if (!this.oAuthToken) {
-      this.client.invoke('notify', 'Authenticating...');
+      this.client.invoke('notify', 'Authenticating...', 'notice', 10000);
       this.view.switchTo('auth_iframe');
     }
     $(window).on("message", async function(event) {
@@ -151,6 +147,7 @@ class NavBar {
   }
 
   setLanguages() {
+    console.log('current lang locale', this.pageParams.currentLanguageLocale)
     if (this.pageParams.currentLanguageLocale.length > 2) {
       this.langCode = this.pageParams.currentLanguageLocale.slice(0,2);
       this.localeCode = this.pageParams.currentLanguageLocale.slice(3,5);
@@ -161,13 +158,13 @@ class NavBar {
         this.qordobaLanguageFullName = qordobaLanguageIdObj.fullName;
       }
       else {
-        this.client.invoke('notify', 'Error matching languages to Qordoba. Please confirm all languages in Zendesk match a language-locale in Qordoba', 'error')
+        this.client.invoke('notify', 'Error matching languages to Qordoba. Please confirm all languages in Zendesk match a language-locale in Qordoba', 'error', 10000)
       }
     }
     else {
       this.langCode = this.pageParams.currentLanguageLocale.slice(0,2);
       this.localeCode = 'int';
-      this.client.invoke('notify', 'Found language without locale. Setting locale to `int` to match Qordoba.', 'alert')
+      this.client.invoke('notify', `Found language without locale (${this.pageParams.currentLanguageLocale}). Setting locale to 'int' to match Qordoba.`, 'alert', 10000)
     }
   }
 
@@ -219,10 +216,10 @@ class NavBar {
 
       if (Object.keys(this.zendeskParentResources).length === 0) {
         if (this.pageType === 'articles') {
-          this.client.invoke('notify', 'Error fetching sections. Please make sure all articles belong to sections, and all sections are published.', 'error')
+          this.client.invoke('notify', 'Error fetching sections. Please make sure all articles belong to sections, and all sections are published.', 'error', 10000)
         }
         else {
-          this.client.invoke('notify', 'Error fetching categories. Please make sure all sections belong to categories, and all categories are published.', 'error')
+          this.client.invoke('notify', 'Error fetching categories. Please make sure all sections belong to categories, and all categories are published.', 'error', 10000)
         }
       }
     }
@@ -237,7 +234,7 @@ class NavBar {
   }
 
   async publishZendeskResources(completeZipFile) {
-    this.client.invoke('notify', `Publishing ${this.pageType}.`, 'notice')
+    this.client.invoke('notify', `Publishing ${this.pageType}.`, 'notice', 10000)
     JSZipUtils.getBinaryContent(`https://app.qordoba.com/api/file/download?token=${completeZipFile.token}&filename=${encodeURIComponent(completeZipFile.filename)}`, async (err, data) => {
 
 
@@ -286,10 +283,10 @@ class NavBar {
                 cors: true
               })
 
-              this.client.invoke('notify', `Found existing ${this.pageType}.`, 'alert')
+              this.client.invoke('notify', `Found existing ${this.pageType}.`, 'alert', 10000)
 
               if (this.ZendeskResources[resourceId].targetOutdated) {
-                this.client.invoke('notify', `Found outdated ${this.pageType}.`, 'alert')
+                this.client.invoke('notify', `Found outdated ${this.pageType}.`, 'alert', 10000)
                 try {
                   var zendeskTranslationResponse = await this.client.request({
                     url: `${this.zendeskBaseUrl}/api/v2/help_center/${this.pageType}/${resourceId}/translations/${this.zendeskLocale}.json`,
@@ -299,17 +296,17 @@ class NavBar {
                     cors: true,
                     headers: {"Authorization": `Bearer ${this.oAuthToken}`}
                   })
+                  this.client.invoke('notify', `Outdated ${this.pageType} updated successfuly.`, 'notice', 10000)
                 }
-                this.client.invoke('notify', `Outdated ${this.pageType} updated successfuly.`, 'notice')
                 catch(error) {
                   console.log('ERROR UPDATING EXISTING', error)
-                  this.client.invoke('notify', `Error updating outdated ${this.pageType}.`, 'error')
+                  this.client.invoke('notify', `Error updating outdated ${this.pageType}.`, 'error', 10000)
                 }
               }
             }
 
             catch(error) {
-              this.client.invoke('notify', `${this.pageType} do not exist. Publishing now.`, 'alert')
+              this.client.invoke('notify', `${this.pageType} do not exist. Publishing now.`, 'notify', 10000)
               console.log('resource doesnt exist', error)
               if (error.responseJSON.error === 'TranslationMissing' || error.responseJSON.error === 'RecordNotFound') {
                   var zendeskTranslationResponse = await this.client.request({
@@ -321,7 +318,7 @@ class NavBar {
                     headers: {"Authorization": `Bearer ${this.oAuthToken}`}
                   })
                 console.log('ZD article created', zendeskTranslationResponse)
-                this.client.invoke('notify', `${this.pageType} published successfuly.`, 'alert')
+                this.client.invoke('notify', `${this.pageType} published successfuly.`, 'notify', 10000)
               }
             }              
           }
@@ -340,7 +337,7 @@ class NavBar {
     }
     catch(err) {
       console.log('ERROR GETTING USER', err)
-      this.client.invoke('notify', `Error getting Zendesk user`, 'error')
+      this.client.invoke('notify', `Error getting Zendesk user`, 'error', 10000)
     }
   }
 
@@ -366,13 +363,13 @@ class NavBar {
         this.zendeskBrands[currentZendeskBrands.brands[i].id].title = currentZendeskBrands.brands[i].name;
         this.pageParams.zendeskBrands.push(this.zendeskBrands[currentZendeskBrands.brands[i].id]);
         if (Object.keys(this.zendeskBrands).length === 0) {
-          this.client.invoke('notify', `Error fetching Zendesk brands`, 'error')
+          this.client.invoke('notify', `Error fetching Zendesk brands`, 'error', 10000)
         }
       }
     }
     catch(err) {
       console.log('ERROR GETTING BRANDS', err)
-      this.client.invoke('notify', `Error getting Zendesk brands`, 'error')
+      this.client.invoke('notify', `Error getting Zendesk brands`, 'error', 10000)
     }
   }
 
@@ -389,7 +386,7 @@ class NavBar {
     }
     catch(err) {
       console.log('ERROR GETTING Zendesk languages', err)
-      this.client.invoke('notify', `Error fetching and setting Zendesk project languages`, 'error')
+      this.client.invoke('notify', `Error fetching and setting Zendesk project languages`, 'error', 10000)
     }
   }
 
@@ -409,7 +406,7 @@ class NavBar {
         }
         catch(err) {
           throw new Error('Error searching:', err)
-          this.client.invoke('notify', 'No search results found', 'error')
+          this.client.invoke('notify', 'No search results found', 'error', 10000)
           this.zendeskSearchTerm = '';
           this.init();
         }
@@ -452,7 +449,7 @@ class NavBar {
     }
     catch(err) {
       console.log('ERROR GETTING Zendesk resources', err)
-      this.client.invoke('notify', `Error fetching Zendesk ${this.pageType}`, 'error')
+      this.client.invoke('notify', `Error fetching Zendesk ${this.pageType}`, 'error', 10000)
     }
   }
 
@@ -474,7 +471,7 @@ class NavBar {
     }
     catch(err) {
       console.log('FOUND NO PUBLISHED RESOURCES FOR THIS LOCALE')
-      this.client.invoke('notify', `Found no published ${this.pageType} for this locale`, 'alert')
+      this.client.invoke('notify', `Found no published ${this.pageType} for this locale`, 'alert', 10000)
     }
   }
 
@@ -503,7 +500,7 @@ class NavBar {
         }
         if (!foundMatchInQProj) {
           //no match
-          this.client.invoke('notify', `Found no match for ${this.localeData.locales[i]} in Qordoba project.`, 'alert')
+          this.client.invoke('notify', `Found no match for language code "${this.localeData.locales[i]}" in Qordoba project.`, 'alert', 10000)
           var pageLangObj = {name: zendeskLocale, fullName: `${zendeskLocale} (no match)`, zendeskLocale: zendeskLocale, selected: false};
           this.pageParams.zendeskLocalesNotPartOfQordobaProject = [];
           this.pageParams.zendeskLocalesNotPartOfQordobaProject.push(pageLangObj)
@@ -524,7 +521,7 @@ class NavBar {
     }
     catch(err) {
       console.log(`Error processing Qordoba credentials.`, err)
-      this.client.invoke('notify', `Error processing Qordoba credentials.`, 'error')
+      this.client.invoke('notify', `Error processing Qordoba credentials.`, 'error', 10000)
     }
   }
 
@@ -546,7 +543,7 @@ class NavBar {
       }
     }
     catch(err) {
-      this.client.invoke('notify', `Error retrieving Qordoba languages.`, 'error')
+      this.client.invoke('notify', `Error retrieving Qordoba languages.`, 'error', 10000)
     }
   }
 
@@ -574,13 +571,13 @@ class NavBar {
           this.qordobaData[resourceId].title = resourceName;
         }
         else if (qordobaResponse.pages.length > 1) {
-          this.client.invoke('notify', `Found multiple matches for this page in Qordoba. Please check your Qordoba project and confirm any duplicates.`, 'error')
+          this.client.invoke('notify', `Found multiple matches for this page in Qordoba. Please check your Qordoba project and confirm any duplicates.`, 'error', 10000)
           throw new Error('Found multiple matches for this page in Qordoba. Please check your Qordoba project and confirm any duplicates')
         }
       }
     }
     catch(err) {
-      this.client.invoke('notify', `Error retrieving Qordoba languages.`, 'error')
+      this.client.invoke('notify', `Error retrieving Qordoba ${this.pageType}.`, 'error', 10000)
     }
   }
 
@@ -609,7 +606,7 @@ class NavBar {
     }
     catch(err) {
       throw new Error ('error downloading files', err)
-      this.client.invoke('notify', `Error downloading files from Qordoba.`, 'error');
+      this.client.invoke('notify', `Error downloading files from Qordoba.`, 'error', 10000);
     }
   }
 
@@ -642,14 +639,14 @@ class NavBar {
         filesToUpload.push(qordobaSendFilesRequest);
       }
       catch(err) {
-        this.client.invoke('notify', `Error uploading ${key}.`, 'error');
+        this.client.invoke('notify', `Error uploading ${key}.`, 'error', 10000);
       }
     }
 
     var randomKey = Object.keys(this.filesToProcess)[0];
 
     if (this.filesToProcess[randomKey].targetExists) {
-      this.client.invoke('notify', `Found existing file in Qordoba. Updating...`, 'notice');
+      this.client.invoke('notify', `Found existing file in Qordoba. Updating...`, 'notice', 10000);
       qordobaSendFilesRequest.url = `https://app.qordoba.com/api/projects/${this.qordobaProjectId}/files/${this.qordobaData[key].qordobaPageId}/update/upload`;
       var qordobaSendFilesResponse = await $.ajax(qordobaSendFilesRequest);
       try {
@@ -665,14 +662,14 @@ class NavBar {
             'Content-Type': 'application/json'
           }
         })
+        this.client.invoke('notify', `Qordoba file updated successfuly.`, 'notice', 10000);
       }
-      this.client.invoke('notify', `Qordoba file updated successfuly.`, 'notice');
       catch(err) {
-        this.client.invoke('notify', `Error updating existing file in Qordoba`, 'error');
+        this.client.invoke('notify', `Error updating existing file in Qordoba`, 'error', 10000);
       }
     } else {
       var appendFilesData = [];
-      this.client.invoke('notify', `No matching files found in Qordoba. Uploading new files.`, 'notice');
+      this.client.invoke('notify', `No matching files found in Qordoba. Uploading new files.`, 'notice', 10000);
       for (var i = 0; i < filesToUpload.length; i++) {
         filesToUpload[i].url = `https://app.qordoba.com/api/organizations/${this.qordobaOrganization}/upload/uploadFile_anyType?content_type_code=stringsHtml&projectId=${this.qordobaProjectId}`;
         var qordobaSendFilesResponse = await $.ajax(filesToUpload[i]);
@@ -689,10 +686,10 @@ class NavBar {
             'Content-Type': 'application/json'
           }
         })
-        this.client.invoke('notify', `Files uploaded successfuly`, 'notice');
+        this.client.invoke('notify', `Files uploaded successfuly`, 'notice', 10000);
       }
       catch(err) {
-        this.client.invoke('notify', `Error uploading new files to Qordoba`, 'error');
+        this.client.invoke('notify', `Error uploading new files to Qordoba`, 'error', 10000);
       }
     }
     this.init();
@@ -729,7 +726,7 @@ class NavBar {
     }
     catch(err) {
       throw new Error(`Error getting Zendesk resource detail for ${resourceName}`)
-      this.client.invoke('notify', `Error getting Zendesk resource detail for ${resourceName}`, 'error');
+      this.client.invoke('notify', `Error getting Zendesk resource detail for ${resourceName}`, 'error', 10000);
     }
   }
 
@@ -921,7 +918,7 @@ class NavBar {
       }
     }
     catch(err) {
-      this.client.invoke('notify', `Error setting row status for ${resourceName}`, 'error')
+      this.client.invoke('notify', `Error setting row status for ${resourceName}`, 'error', 10000)
       throw new Error(`Error setting row status for ${listRowElement}`, err)
     }
   }
@@ -1045,7 +1042,7 @@ class NavBar {
       }
     }
     catch(err) {
-      this.client.invoke('notify', 'Error setting page statuses', 'error')
+      this.client.invoke('notify', 'Error setting page statuses', 'error', 10000)
       throw new Error('Error setting page statuses', err)
     }
   }
@@ -1089,7 +1086,7 @@ class NavBar {
       return this.view.switchTo('QordobaHome', this.pageParams);
     }
     catch(err) {
-      this.client.invoke('notify', 'Error rendering sync page.', 'error')
+      this.client.invoke('notify', 'Error rendering sync page.', 'error', 10000)
       throw new Error('Error rendering sync page.', err)
     }
   }
