@@ -100,7 +100,9 @@ class NavBar {
 
     this.processQordobaCredentials();
     await this.getAndSetZendeskBrands();
-    await this.getZendeskResourceList();
+    if (!this.zendeskSearchTerm) {
+      await this.getZendeskResourceList();
+    }
     await this.getZendeskProjectLanguages();
     this.jsonReqHeader = {'X-AUTH-TOKEN': this.qordobaAuthToken,'Content-Type': 'application/json'};
     await this.getQordobaProjectLanguages();
@@ -175,7 +177,7 @@ class NavBar {
   //***********ZENDESK API CALLS***********************
 
   async getZendeskResourceList() {
-    var articleList = await this.client.request({
+    var resourceList = await this.client.request({
       type: 'GET',
       dataType: 'json',
       url: `${this.zendeskBaseUrl}/api/v2/help_center/${this.pageType}.json`, 
@@ -183,49 +185,7 @@ class NavBar {
       headers: {"Authorization": `Bearer ${this.oAuthToken}`}
     })
 
-    if (this.pageType === 'articles') {
-      var parentListResponse = await this.client.request({
-        type: 'GET',
-        dataType: 'json',
-        url: `${this.zendeskBaseUrl}/api/v2/help_center/sections.json`, 
-        cors: true,
-        headers: {"Authorization": `Bearer ${this.oAuthToken}`}
-      })
-    }
-
-    else if (this.pageType === 'sections') {
-      var parentListResponse = await this.client.request({
-        type: 'GET',
-        dataType: 'json',
-        url: `${this.zendeskBaseUrl}/api/v2/help_center/categories.json`, 
-        cors: true,
-        headers: {"Authorization": `Bearer ${this.oAuthToken}`}
-      })
-    }
-
-    if (this.pageType !== 'categories') {
-      var parentList = parentListResponse.sections || parentListResponse.categories;
-
-      for (var i = 0; i < parentList.length; i++) {
-        var id = parentList[i].id;
-        this.zendeskParentResources[id] = {};
-        this.zendeskParentResources[id].title = parentList[i].name;
-        this.zendeskParentResources[id].description = parentList[i].description;
-        this.zendeskParentResources[id].url = parentList[i].html_url;
-      }
-
-      if (Object.keys(this.zendeskParentResources).length === 0) {
-        if (this.pageType === 'articles') {
-          this.client.invoke('notify', 'Error fetching sections. Please make sure all articles belong to sections, and all sections are published.', 'error', 10000)
-        }
-        else {
-          this.client.invoke('notify', 'Error fetching categories. Please make sure all sections belong to categories, and all categories are published.', 'error', 10000)
-        }
-      }
-    }
-
-
-    var totalPageCount = Math.ceil(articleList.count / Number(this.limit));
+    var totalPageCount = Math.ceil(resourceList.count / Number(this.limit));
     this.pageParams.paginationVisible = true; 
     this.pageParams.prevPageEnabled = this.pageNumber > 1;
     this.pageParams.nextPageEnabled = this.pageNumber < totalPageCount;
@@ -403,6 +363,12 @@ class NavBar {
             cors: true
           });
           var resourcesInSource = resourcesResponse.results;
+
+          var totalPageCount = Math.ceil(resourcesInSource.length / Number(this.limit));
+          this.pageParams.paginationVisible = true; 
+          this.pageParams.prevPageEnabled = this.pageNumber > 1;
+          this.pageParams.nextPageEnabled = this.pageNumber < totalPageCount;
+          this.pageParams.dataset = [];
         }
         catch(err) {
           throw new Error('Error searching:', err)
@@ -423,6 +389,7 @@ class NavBar {
 
 
       for (var i = 0; i < resourcesInSource.length; i++) {
+        console.log('resource', resourcesInSource[i]);
         this.ZendeskResources[resourcesInSource[i].id] = {};
         this.ZendeskResources[resourcesInSource[i].id].body = resourcesInSource[i].body;
         this.ZendeskResources[resourcesInSource[i].id].title = resourcesInSource[i].title || resourcesInSource[i].name;
@@ -433,9 +400,25 @@ class NavBar {
         // this.ZendeskResources[resourcesInSource[i].id].completed = resourcesInSource[i].completed;
         this.ZendeskResources[resourcesInSource[i].id].targetPublished = false;
         this.ZendeskResources[resourcesInSource[i].id].targetOutdated = false;
+        this.ZendeskResources[resourcesInSource[i].id].parentId = resourcesInSource[i].section_id || resourcesInSource[i].category_id;
+        //Get parent section
         if (this.pageType !== 'categories') {
-          var parentId = resourcesInSource[i].section_id || resourcesInSource[i].category_id;
-          this.ZendeskResources[resourcesInSource[i].id].parent = this.zendeskParentResources[parentId].title;
+          if (this.pageType === 'articles') {
+            var parentSectionResponse = await this.client.request({
+              type: 'GET',
+              url: `${this.zendeskBaseUrl}/api/v2/help_center/sections/${this.ZendeskResources[resourcesInSource[i].id].parentId}.json`,
+              cors: true
+            })
+          }
+          else {
+            var parentSectionResponse = await this.client.request({
+              type: 'GET',
+              url: `${this.zendeskBaseUrl}/api/v2/help_center/categories/${this.ZendeskResources[resourcesInSource[i].id].parentId}.json`,
+              cors: true
+            })
+          }
+          var parentSection = parentSectionResponse.section || parentSectionResponse.category;
+          this.ZendeskResources[resourcesInSource[i].id].parent = parentSection.name;
         }
         if (this.pageType === 'articles') {
           for (var j = 0; j < resourcesInSource[i].outdated_locales.length; j++) {
