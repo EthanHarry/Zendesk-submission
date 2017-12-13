@@ -149,7 +149,6 @@ class NavBar {
   }
 
   setLanguages() {
-    console.log('current lang locale', this.pageParams.currentLanguageLocale)
     if (this.pageParams.currentLanguageLocale.length > 2) {
       this.langCode = this.pageParams.currentLanguageLocale.slice(0,2);
       this.localeCode = this.pageParams.currentLanguageLocale.slice(3,5);
@@ -194,7 +193,7 @@ class NavBar {
   }
 
   async publishZendeskResources(completeZipFile) {
-    this.client.invoke('notify', `Publishing ${this.pageType}.`, 'notice', 10000)
+    this.client.invoke('notify',`Publishing ${this.pageType}.`,'notice', 10000)
     JSZipUtils.getBinaryContent(`https://app.qordoba.com/api/file/download?token=${completeZipFile.token}&filename=${encodeURIComponent(completeZipFile.filename)}`, async (err, data) => {
 
 
@@ -245,7 +244,7 @@ class NavBar {
 
               this.client.invoke('notify', `Found existing ${this.pageType}.`, 'alert', 10000)
 
-              if (this.ZendeskResources[resourceId].targetOutdated) {
+              // if (this.ZendeskResources[resourceId].targetOutdated) {
                 this.client.invoke('notify', `Found outdated ${this.pageType}.`, 'alert', 10000)
                 try {
                   var zendeskTranslationResponse = await this.client.request({
@@ -259,15 +258,13 @@ class NavBar {
                   this.client.invoke('notify', `Outdated ${this.pageType} updated successfuly.`, 'notice', 10000)
                 }
                 catch(error) {
-                  console.log('ERROR UPDATING EXISTING', error)
                   this.client.invoke('notify', `Error updating outdated ${this.pageType}.`, 'error', 10000)
                 }
-              }
+              // }
             }
 
             catch(error) {
               this.client.invoke('notify', `${this.pageType} do not exist. Publishing now.`, 'notify', 10000)
-              console.log('resource doesnt exist', error)
               if (error.responseJSON.error === 'TranslationMissing' || error.responseJSON.error === 'RecordNotFound') {
                   var zendeskTranslationResponse = await this.client.request({
                     url: `${this.zendeskBaseUrl}/api/v2/help_center/${this.pageType}/${resourceId}/translations.json`,
@@ -277,7 +274,6 @@ class NavBar {
                     cors: true,
                     headers: {"Authorization": `Bearer ${this.oAuthToken}`}
                   })
-                console.log('ZD article created', zendeskTranslationResponse)
                 this.client.invoke('notify', `${this.pageType} published successfuly.`, 'notify', 10000)
               }
             }              
@@ -296,7 +292,6 @@ class NavBar {
       return this.client.request({ url: `${this.zendeskBaseUrl}/api/v2/users/me.json`, cors: true })
     }
     catch(err) {
-      console.log('ERROR GETTING USER', err)
       this.client.invoke('notify', `Error getting Zendesk user`, 'error', 10000)
     }
   }
@@ -328,7 +323,6 @@ class NavBar {
       }
     }
     catch(err) {
-      console.log('ERROR GETTING BRANDS', err)
       this.client.invoke('notify', `Error getting Zendesk brands`, 'error', 10000)
     }
   }
@@ -345,7 +339,6 @@ class NavBar {
       this.sourceLocale = this.localeData.default_locale;
     }
     catch(err) {
-      console.log('ERROR GETTING Zendesk languages', err)
       this.client.invoke('notify', `Error fetching and setting Zendesk project languages`, 'error', 10000)
     }
   }
@@ -389,7 +382,6 @@ class NavBar {
 
 
       for (var i = 0; i < resourcesInSource.length; i++) {
-        console.log('resource', resourcesInSource[i]);
         this.ZendeskResources[resourcesInSource[i].id] = {};
         this.ZendeskResources[resourcesInSource[i].id].body = resourcesInSource[i].body;
         this.ZendeskResources[resourcesInSource[i].id].title = resourcesInSource[i].title || resourcesInSource[i].name;
@@ -431,7 +423,6 @@ class NavBar {
       }
     }
     catch(err) {
-      console.log('ERROR GETTING Zendesk resources', err)
       this.client.invoke('notify', `Error fetching Zendesk ${this.pageType}`, 'error', 10000)
     }
   }
@@ -453,7 +444,6 @@ class NavBar {
       }
     }
     catch(err) {
-      console.log('FOUND NO PUBLISHED RESOURCES FOR THIS LOCALE')
       this.client.invoke('notify', `Found no published ${this.pageType} for this locale`, 'alert', 10000)
     }
   }
@@ -503,7 +493,6 @@ class NavBar {
       this.qordobaAuthToken = this.userSettings['Qordoba X-Auth Token'];
     }
     catch(err) {
-      console.log(`Error processing Qordoba credentials.`, err)
       this.client.invoke('notify', `Error processing Qordoba credentials.`, 'error', 10000)
     }
   }
@@ -765,13 +754,13 @@ class NavBar {
             }
             else {
               if (this.filesToProcess[resourceId].targetCompleted) {
-                if (this.filesToProcess[resourceId].targetPublished && !this.filesToProcess[resourceId].targetOutdated) {
-                  publishButtonEnabled = false;
-                  if (allResourceCheckboxes[i] !== e.target) {
-                    allResourceCheckboxes[i].disabled = true;
-                  }
-                }
-                else {
+                // if (this.filesToProcess[resourceId].targetPublished && !this.filesToProcess[resourceId].targetOutdated) {
+                //   publishButtonEnabled = false;
+                //   if (allResourceCheckboxes[i] !== e.target) {
+                //     allResourceCheckboxes[i].disabled = true;
+                //   }
+                // }
+                // else {
                   // selectAllCheckbox.disabled = true;
                   if (allResourceCheckboxes[i] !== e.target && (!this.qordobaData[id] || !this.qordobaData[id].completed || this.ZendeskResources[id].targetPublished)) {
                     allResourceCheckboxes[i].disabled = true;
@@ -779,7 +768,7 @@ class NavBar {
                       uploadButtonEnabled = false;
                     }
                   }
-                }
+                // }
               }
               else {
                 if (allResourceCheckboxes[i] !== e.target) {
@@ -1036,8 +1025,14 @@ class NavBar {
   reconstructZendeskResourcesObject(dataObject, key) {
     var qordobaPublished = this.qordobaData[key] || {completed: false};
     var targetUrl = dataObject.url.replace(this.sourceLocale, this.zendeskLocale);
-    var sourceAdminUrl = `${this.client._origin}/knowledge/${this.pageType}/${key}/${this.sourceLocale}?brand_id=${this.currentZendeskBrand}`;
-    var targetAdminUrl = `${this.client._origin}/knowledge/${this.pageType}/${key}/${this.zendeskLocale}?brand_id=${this.currentZendeskBrand}`;
+    if (this.pageType === 'articles') {
+      var sourceAdminUrl = `${this.client._origin}/knowledge/${this.pageType}/${key}/${this.sourceLocale}?brand_id=${this.currentZendeskBrand}`;
+      var targetAdminUrl = `${this.client._origin}/knowledge/${this.pageType}/${key}/${this.zendeskLocale}?brand_id=${this.currentZendeskBrand}`;
+    }
+    else {
+      var sourceAdminUrl = `${this.client._origin}/hc/admin/${this.pageType}/${key}/edit`;
+      var targetAdminUrl = sourceAdminUrl + `?translation_locale=${this.zendeskLocale}`;
+    }
     if (this.pageType !== 'categories') {
       var titleString = `${dataObject.title} (${dataObject.parent})`;
     } 

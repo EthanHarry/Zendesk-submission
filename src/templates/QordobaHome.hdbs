@@ -82,10 +82,6 @@
         <a tab="categories" class="o-tabs__item" href="#">Categories</a>
         {{/if}}
 
-        {{#if page_dynamic_content}}
-          <a class="o-tabs__item is-active" href="#">Dynamic Content</a>
-        {{/if}}
-
 
       </div>
     </div>
