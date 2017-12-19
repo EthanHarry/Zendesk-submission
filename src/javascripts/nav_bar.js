@@ -4,6 +4,8 @@ var newZip = new JSZip();
 
 const MAX_HEIGHT = 375;
 
+//Loader fix on ZD Auth
+
   //FUTURE
   //Dont call for languages and brands every time we re-init -- you already have them
   //Work on signle source of truth for data -- dont need pageparams to be seperate from actual data
@@ -114,6 +116,7 @@ class NavBar {
     this.renderZendeskSyncPage();
     this.setAllResourceAndDomNodeStauses();
 
+    console.log('ALL DATA', this)
 
   }
 
@@ -149,7 +152,7 @@ class NavBar {
   }
 
   setLanguages() {
-    if (this.pageParams.currentLanguageLocale.length > 2) {
+    if (!this.pageParams.currentLanguageLocale.includes('int')) {
       this.langCode = this.pageParams.currentLanguageLocale.slice(0,2);
       this.localeCode = this.pageParams.currentLanguageLocale.slice(3,5);
       this.zendeskLocale = `${this.langCode}-${this.localeCode}`;
@@ -165,7 +168,13 @@ class NavBar {
     else {
       this.langCode = this.pageParams.currentLanguageLocale.slice(0,2);
       this.localeCode = 'int';
-      this.client.invoke('notify', `Found language without locale (${this.pageParams.currentLanguageLocale}). Setting locale to 'int' to match Qordoba.`, 'alert', 10000)
+      this.zendeskLocale = this.langCode;
+      var qordobaLanguageIdObj = this.qordobaProjectActiveLanguages[`${this.langCode}-${this.localeCode}`] || this.qordobaProjectActiveLanguages[this.pageParams.currentLanguageLocale];
+      console.log('qLangIdObj', qordobaLanguageIdObj)
+      if (qordobaLanguageIdObj && qordobaLanguageIdObj.id) {
+        this.qordobaLanguageId = qordobaLanguageIdObj.id;
+        this.qordobaLanguageFullName = qordobaLanguageIdObj.fullName;
+      }
     }
   }
 
@@ -207,8 +216,12 @@ class NavBar {
         var resourceIdString = resourceArray[1];
         var resourceIdArray = resourceIdString.match(/[0-9]*/);
         var resourceId = resourceIdArray[0];
-
-        if (this.qordobaData[resourceId] && this.qordobaData[resourceId].completed && key.slice(0,5) === `${this.langCode}-${this.localeCode}`) {
+        console.log('lang code', this.langCode)
+        console.log('locale code', this.localeCode)
+        console.log('key', key)
+        console.log('resourceId', resourceId)
+        console.log('qordobaData', this.qordobaData)
+        if (this.qordobaData[resourceId] && this.qordobaData[resourceId].completed && (key.slice(0,5) === `${this.langCode}-${this.localeCode}` || key.slice(0,6) === `${this.langCode}-${this.localeCode}`)) {
           var finalizedZipData = await completedZipData[key].async('text');
           var getTitleRegex = /<div>\s*(.*)\s*<\/div>/;
           var getTitleMatches = getTitleRegex.exec(finalizedZipData);
@@ -242,10 +255,10 @@ class NavBar {
                 cors: true
               })
 
-              this.client.invoke('notify', `Found existing ${this.pageType}.`, 'alert', 10000)
+              // this.client.invoke('notify', `Found existing ${this.pageType}.`, 'alert', 10000)
 
               // if (this.ZendeskResources[resourceId].targetOutdated) {
-                this.client.invoke('notify', `Found outdated ${this.pageType}.`, 'alert', 10000)
+                // this.client.invoke('notify', `Found outdated ${this.pageType}.`, 'alert', 10000)
                 try {
                   var zendeskTranslationResponse = await this.client.request({
                     url: `${this.zendeskBaseUrl}/api/v2/help_center/${this.pageType}/${resourceId}/translations/${this.zendeskLocale}.json`,
@@ -255,16 +268,16 @@ class NavBar {
                     cors: true,
                     headers: {"Authorization": `Bearer ${this.oAuthToken}`}
                   })
-                  this.client.invoke('notify', `Outdated ${this.pageType} updated successfuly.`, 'notice', 10000)
+                  // this.client.invoke('notify', `Outdated ${this.pageType} updated successfuly.`, 'notice', 10000)
                 }
                 catch(error) {
-                  this.client.invoke('notify', `Error updating outdated ${this.pageType}.`, 'error', 10000)
+                  // this.client.invoke('notify', `Error updating outdated ${this.pageType}.`, 'error', 10000)
                 }
               // }
             }
 
             catch(error) {
-              this.client.invoke('notify', `${this.pageType} do not exist. Publishing now.`, 'notify', 10000)
+              // this.client.invoke('notify', `${this.pageType} do not exist. Publishing now.`, 'notify', 10000)
               if (error.responseJSON.error === 'TranslationMissing' || error.responseJSON.error === 'RecordNotFound') {
                   var zendeskTranslationResponse = await this.client.request({
                     url: `${this.zendeskBaseUrl}/api/v2/help_center/${this.pageType}/${resourceId}/translations.json`,
@@ -274,7 +287,7 @@ class NavBar {
                     cors: true,
                     headers: {"Authorization": `Bearer ${this.oAuthToken}`}
                   })
-                this.client.invoke('notify', `${this.pageType} published successfuly.`, 'notify', 10000)
+                // this.client.invoke('notify', `${this.pageType} published successfuly.`, 'notify', 10000)
               }
             }              
           }
@@ -471,6 +484,20 @@ class NavBar {
           }
           this.pageParams.activeLanguages.push(pageLangObj);
         }
+        else if (this.qordobaProjectActiveLanguages[`${zendeskLocale}-int`]) {
+          //partial match -- `-int`
+          foundMatchInQProj = true;
+          var pageLangObj = {name: `${zendeskLocale}-int`, fullName: this.qordobaProjectActiveLanguages[`${zendeskLocale}-int`].fullName, zendeskLocale: zendeskLocale};
+          if (zendeskLocale === `${this.langCode}`) {
+            pageLangObj.selected = true;
+          } else {
+            pageLangObj.selected = false;
+          }          
+          if (!this.pageParams.currentLanguageLocale) {
+            this.pageParams.currentLanguageLocale = `${zendeskLocale}-int`;
+          }
+          this.pageParams.activeLanguages.push(pageLangObj);
+        }
         if (!foundMatchInQProj) {
           //no match
           this.client.invoke('notify', `Found no match for language code "${this.localeData.locales[i]}" in Qordoba project.`, 'alert', 10000)
@@ -592,9 +619,16 @@ class NavBar {
     for (var key in this.filesToProcess) {
       try {
         await this.getZendeskResourceDetail(this.filesToProcess[key].title, key);
-        var fileToUpload = new File([this.filesToProcess[key].file], `${this.filesToProcess[key].title}__${key} (${this.ZendeskResources[key].parent}).html`, {
-          type: "text/html"
-        })
+        if (this.pageType !== 'categories') {
+          var fileToUpload = new File([this.filesToProcess[key].file], `${this.filesToProcess[key].title}__${key} (${this.ZendeskResources[key].parent}).html`, {
+            type: "text/html"
+          })
+        }
+        else {
+          var fileToUpload = new File([this.filesToProcess[key].file], `${this.filesToProcess[key].title}__${key}.html`, {
+            type: "text/html"
+          })
+        }
 
         var fd = new FormData();
         fd.append('project_id', this.qordobaProjectId);

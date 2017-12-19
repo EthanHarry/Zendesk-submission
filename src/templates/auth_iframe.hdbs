@@ -1,5 +1,8 @@
-<div class="inner-loading-div">
-  <img class="loading-img" src="../images/spinner.gif" alt="loading..." />
+<div class='loading-div'>
+  <div class="inner-loading-div">
+    <img class="loading-img" src="../images/spinner.gif" alt="loading..." />
+  </div>
 </div>
+
 <iframe src="https://us-central1-qordoba-devel.cloudfunctions.net/qordoba-zendesk-user_token" frameborder="0">
 </iframe>
