@@ -15,11 +15,8 @@ const MAX_HEIGHT = 375;
 //TODO
   //In order to send dynamic content to qordoba, we're wrapping it in some HTML tags. Need to "unwrap" in translated content before we publish
   //Dynamic content items and variants dont have their own URLs. Need to add div in dynamic content explaining this and linking to `/agent/admin/dynamic_content`
-  //Ignore source locale in this.pageParams.activeLanguages
-  //Fix links for Dynamic Content
   //Investigate dif markup types available in dynamic content -- right now just wrapping in HTML and BODY tags
   //Look at whether we even need getZendeskDetial for help center stuff -- pretty sure we already have everything we need in this.zendeskResources
-  //Fix "found no published" notification for dynamic content
 
   //FUTURE
   //Dont call for languages and brands every time we re-init -- you already have them
