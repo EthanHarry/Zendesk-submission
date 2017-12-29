@@ -4,7 +4,22 @@ var newZip = new JSZip();
 
 const MAX_HEIGHT = 375;
 
-//Loader fix on ZD Auth
+//TODO
+//TODO
+//TODO
+//TODO
+//TODO
+//TODO
+//TODO
+//TODO
+//TODO
+  //In order to send dynamic content to qordoba, we're wrapping it in some HTML tags. Need to "unwrap" in translated content before we publish
+  //Dynamic content items and variants dont have their own URLs. Need to add div in dynamic content explaining this and linking to `/agent/admin/dynamic_content`
+  //Ignore source locale in this.pageParams.activeLanguages
+  //Fix links for Dynamic Content
+  //Investigate dif markup types available in dynamic content -- right now just wrapping in HTML and BODY tags
+  //Look at whether we even need getZendeskDetial for help center stuff -- pretty sure we already have everything we need in this.zendeskResources
+  //Fix "found no published" notification for dynamic content
 
   //FUTURE
   //Dont call for languages and brands every time we re-init -- you already have them
@@ -69,6 +84,7 @@ class NavBar {
       page_articles: '',
       page_categories: '',
       page_sections: '',
+      page_dynamic_content: '',
       dataset: [],
       has_more_langs: false,
       currentLanguageLocale: '',
@@ -90,6 +106,7 @@ class NavBar {
     this.pageParams.page_articles = this.pageType === 'articles';
     this.pageParams.page_sections = this.pageType === 'sections';
     this.pageParams.page_categories = this.pageType === 'categories';
+    this.pageParams.page_dynamic_content = this.pageType === 'dynamic_content';
     this.pageParams.search_term = this.zendeskSearchTerm;
     this.qordobaData = {};
     this.ZendeskResources = {};
@@ -185,13 +202,24 @@ class NavBar {
   //***********ZENDESK API CALLS***********************
 
   async getZendeskResourceList() {
-    var resourceList = await this.client.request({
+
+    var resourceListReq = {
       type: 'GET',
       dataType: 'json',
-      url: `${this.zendeskBaseUrl}/api/v2/help_center/${this.pageType}.json`, 
       cors: true,
       headers: {"Authorization": `Bearer ${this.oAuthToken}`}
-    })
+    }
+
+    if (this.pageType !== 'dynamic_content') {
+      resourceListReq.url = `${this.zendeskBaseUrl}/api/v2/help_center/${this.pageType}.json`
+    }
+    else {
+      resourceListReq.url = `${this.zendeskBaseUrl}/api/v2/${this.pageType}/items.json`
+    }
+
+    var resourceList = await this.client.request(resourceListReq);
+
+    console.log('resourceList', resourceList)
 
     var totalPageCount = Math.ceil(resourceList.count / Number(this.limit));
     this.pageParams.paginationVisible = true; 
@@ -205,7 +233,7 @@ class NavBar {
     this.client.invoke('notify',`Publishing ${this.pageType}.`,'notice', 10000)
     JSZipUtils.getBinaryContent(`https://app.qordoba.com/api/file/download?token=${completeZipFile.token}&filename=${encodeURIComponent(completeZipFile.filename)}`, async (err, data) => {
 
-
+      var translateDynamicContentRequest;
       var completedZipDataObj = await newZip.loadAsync(data);
       var completedZipData = completedZipDataObj.files;
 
@@ -223,71 +251,108 @@ class NavBar {
         console.log('qordobaData', this.qordobaData)
         if (this.qordobaData[resourceId] && this.qordobaData[resourceId].completed && (key.slice(0,5) === `${this.langCode}-${this.localeCode}` || key.slice(0,6) === `${this.langCode}-${this.localeCode}`)) {
           var finalizedZipData = await completedZipData[key].async('text');
-          var getTitleRegex = /<div>\s*(.*)\s*<\/div>/;
-          var getTitleMatches = getTitleRegex.exec(finalizedZipData);
-          var translatedTitle = getTitleMatches[1];
-          finalizedZipData = finalizedZipData.replace(getTitleRegex, '');
-          if (this.pageType !== 'articles') {
-            if (finalizedZipData.length) {
-              finalizedZipData = finalizedZipData.replace(/(<([^>]+)>)/ig, '');
-              var findTextRegex = /\S[\s, \S]*\S/;
-              var textMatch = findTextRegex.exec(finalizedZipData);
-              if (textMatch) {
-                finalizedZipData = textMatch[0];
+          console.log('finalizedZipData', finalizedZipData)
+          if (this.pageType === 'dynamic_content') {
+            for (var key in this.pageParams.activeLanguages) {
+              if (this.zendeskLocale === this.pageParams.activeLanguages[key].zendeskLocale) {
+                var localeId = this.pageParams.activeLanguages[key].zendeskLocaleId;
+                break;
               }
-              else {
-                finalizedZipData = '';
+            }
+            translateDynamicContentRequest = {
+              variant: {
+                locale_id: localeId,
+                active: true, //TODO confirm this is ok and see what it means
+                default: false,
+                content: finalizedZipData
               }
             }
           }
-          var translationReq = {
-            translation: {
-              body: finalizedZipData,
-              locale: this.zendeskLocale,
-              title: translatedTitle
+          else {
+            var getTitleRegex = /<div>\s*(.*)\s*<\/div>/;
+            var getTitleMatches = getTitleRegex.exec(finalizedZipData);
+            var translatedTitle = getTitleMatches[1];
+            finalizedZipData = finalizedZipData.replace(getTitleRegex, '');
+            if (this.pageType !== 'articles') {
+              if (finalizedZipData.length) {
+                finalizedZipData = finalizedZipData.replace(/(<([^>]+)>)/ig, '');
+                var findTextRegex = /\S[\s, \S]*\S/;
+                var textMatch = findTextRegex.exec(finalizedZipData);
+                if (textMatch) {
+                  finalizedZipData = textMatch[0];
+                }
+                else {
+                  finalizedZipData = '';
+                }
+              }
+            }
+            var translationReq = {
+              translation: {
+                body: finalizedZipData,
+                locale: this.zendeskLocale,
+                title: translatedTitle
+              }
             }
           }
           if (this.ZendeskResources[resourceId]) {
             try {
-              var resourceExists = await this.client.request({
-                url: `${this.zendeskBaseUrl}/api/v2/help_center/${this.pageType}/${resourceId}/translations/${this.zendeskLocale}.json`,
-                type: 'GET',
+              var checkResourceRequest = {
                 cors: true
-              })
+              }
+              if (this.pageType !== 'dynamic_content') {
+                checkResourceRequest.url = `${this.zendeskBaseUrl}/api/v2/help_center/${this.pageType}/${resourceId}/translations/${this.zendeskLocale}.json`;
+                checkResourceRequest.type = 'GET';
+              }
+              else {
+                checkResourceRequest.url = `${this.zendeskBaseUrl}/api/v2/${this.pageType}/items/${resourceId}/variants.json`;
+                checkResourceRequest.type = 'POST';
+                checkResourceRequest.data = translateDynamicContentRequest;
+              }
+              var resourceExists = await this.client.request(checkResourceRequest);
 
               // this.client.invoke('notify', `Found existing ${this.pageType}.`, 'alert', 10000)
 
               // if (this.ZendeskResources[resourceId].targetOutdated) {
                 // this.client.invoke('notify', `Found outdated ${this.pageType}.`, 'alert', 10000)
-                try {
-                  var zendeskTranslationResponse = await this.client.request({
-                    url: `${this.zendeskBaseUrl}/api/v2/help_center/${this.pageType}/${resourceId}/translations/${this.zendeskLocale}.json`,
-                    type: 'PUT',
-                    data: JSON.stringify(translationReq),
-                    contentType: 'application/json',
-                    cors: true,
-                    headers: {"Authorization": `Bearer ${this.oAuthToken}`}
-                  })
-                  // this.client.invoke('notify', `Outdated ${this.pageType} updated successfuly.`, 'notice', 10000)
-                }
-                catch(error) {
-                  // this.client.invoke('notify', `Error updating outdated ${this.pageType}.`, 'error', 10000)
+                if (this.pageType !== 'dynamic_content') {
+                  try {
+                    var zendeskTranslationResponse = await this.client.request({
+                      url: `${this.zendeskBaseUrl}/api/v2/help_center/${this.pageType}/${resourceId}/translations/${this.zendeskLocale}.json`,
+                      type: 'PUT',
+                      data: JSON.stringify(translationReq),
+                      contentType: 'application/json',
+                      cors: true,
+                      headers: {"Authorization": `Bearer ${this.oAuthToken}`}
+                    })
+                    // this.client.invoke('notify', `Outdated ${this.pageType} updated successfuly.`, 'notice', 10000)
+                  }
+                  catch(error) {
+                    // this.client.invoke('notify', `Error updating outdated ${this.pageType}.`, 'error', 10000)
+                  }
                 }
               // }
             }
 
             catch(error) {
               // this.client.invoke('notify', `${this.pageType} do not exist. Publishing now.`, 'notify', 10000)
-              if (error.responseJSON.error === 'TranslationMissing' || error.responseJSON.error === 'RecordNotFound') {
-                  var zendeskTranslationResponse = await this.client.request({
-                    url: `${this.zendeskBaseUrl}/api/v2/help_center/${this.pageType}/${resourceId}/translations.json`,
-                    type: 'POST',
-                    data: JSON.stringify(translationReq),
-                    contentType: 'application/json',
-                    cors: true,
-                    headers: {"Authorization": `Bearer ${this.oAuthToken}`}
-                  })
-                // this.client.invoke('notify', `${this.pageType} published successfuly.`, 'notify', 10000)
+              if (this.pageType !== 'dynamic_content') {
+                if (error.responseJSON.error === 'TranslationMissing' || error.responseJSON.error === 'RecordNotFound') {
+                    var zendeskTranslationResponse = await this.client.request({
+                      url: `${this.zendeskBaseUrl}/api/v2/help_center/${this.pageType}/${resourceId}/translations.json`,
+                      type: 'POST',
+                      data: JSON.stringify(translationReq),
+                      contentType: 'application/json',
+                      cors: true,
+                      headers: {"Authorization": `Bearer ${this.oAuthToken}`}
+                    })
+                  // this.client.invoke('notify', `${this.pageType} published successfuly.`, 'notify', 10000)
+                }
+              }
+              else {
+                console.log('NEED TO UPDATE VARIANT')
+                // var variantTranslation = await this.client.request({
+
+                // })
               }
             }              
           }
@@ -345,10 +410,17 @@ class NavBar {
   async getZendeskProjectLanguages() {
     try {
       this.localeData = await this.client.request({
-        url: `${this.zendeskBaseUrl}/api/v2/help_center/locales.json`,
+        url: `${this.zendeskBaseUrl}/api/v2/locales.json`,
         type: 'GET',
         cors: true
       })
+      for (var i = 0; i < this.localeData.locales.length; i++) {
+        if (this.localeData.locales[i].default) {
+          this.localeData.locales.splice(i,1);
+        }
+        break;
+      }
+      console.log('LOCALE DATA', this.localeData)
       this.sourceLocale = this.localeData.default_locale;
     }
     catch(err) {
@@ -369,7 +441,6 @@ class NavBar {
             cors: true
           });
           var resourcesInSource = resourcesResponse.results;
-
           var totalPageCount = Math.ceil(resourcesInSource.length / Number(this.limit));
           this.pageParams.paginationVisible = true; 
           this.pageParams.prevPageEnabled = this.pageNumber > 1;
@@ -384,30 +455,54 @@ class NavBar {
         }
       }
       else {
-        var resourcesResponse = await this.client.request({
-          url: `${this.zendeskBaseUrl}/api/v2/help_center/${this.pageType}.json?page=${this.pageNumber}&per_page=${this.limit}&offset=${this.offset}&sort_by=updated_at&sort_order=desc`,
+        var getResourcesRequest = {
           type: 'GET',
           dataType: 'json',
           cors: true
-        });
-        var resourcesInSource = resourcesResponse.articles || resourcesResponse.categories || resourcesResponse.sections;
+        }
+        if (this.pageType !== 'dynamic_content') {
+          getResourcesRequest.url = `${this.zendeskBaseUrl}/api/v2/help_center/${this.pageType}.json?page=${this.pageNumber}&per_page=${this.limit}&offset=${this.offset}&sort_by=updated_at&sort_order=desc`;
+        }
+        else {
+          getResourcesRequest.url = `${this.zendeskBaseUrl}/api/v2/${this.pageType}/items.json?page=${this.pageNumber}&per_page=${this.limit}&offset=${this.offset}&sort_by=updated_at&sort_order=desc`;
+        }
+        var resourcesResponse = await this.client.request(getResourcesRequest);
+        console.log('resources Response', resourcesResponse)
+        var resourcesInSource = resourcesResponse.articles || resourcesResponse.categories || resourcesResponse.sections || resourcesResponse.items;
       }
 
 
       for (var i = 0; i < resourcesInSource.length; i++) {
         this.ZendeskResources[resourcesInSource[i].id] = {};
-        this.ZendeskResources[resourcesInSource[i].id].body = resourcesInSource[i].body;
+        this.ZendeskResources[resourcesInSource[i].id].draft = false;
+        if (this.pageType === 'dynamic_content') {
+          var itemDetail = await this.client.request({
+            cors: true,
+            type: 'GET',
+            url: `${this.zendeskBaseUrl}/api/v2/dynamic_content/items/${resourcesInSource[i].id}.json`
+          })
+          console.log('dynamic content ITEM DETAIL', itemDetail)
+          for (var j = 0; j < itemDetail.item.variants.length; j++) {
+            if (itemDetail.item.variants[j].default) {
+              this.ZendeskResources[resourcesInSource[i].id].body = `<html><body>${itemDetail.item.variants[j].content}</body></html>`;
+            }
+            else if (this.pageParams.activeLanguages[itemDetail.item.variants[j].locale_id] && this.pageParams.activeLanguages[itemDetail.item.variants[j].locale_id].zendeskLocale === this.zendeskLocale) {
+              this.ZendeskResources[resourcesInSource[i].id].targetPublished = true;
+            }
+          }
+        }
+        this.ZendeskResources[resourcesInSource[i].id].body = this.ZendeskResources[resourcesInSource[i].id].body || resourcesInSource[i].body;
         this.ZendeskResources[resourcesInSource[i].id].title = resourcesInSource[i].title || resourcesInSource[i].name;
         this.ZendeskResources[resourcesInSource[i].id].createdAt = resourcesInSource[i].created_at;
         this.ZendeskResources[resourcesInSource[i].id].updatedAt = resourcesInSource[i].updated_at;
-        this.ZendeskResources[resourcesInSource[i].id].url = resourcesInSource[i].html_url;
-        this.ZendeskResources[resourcesInSource[i].id].draft = resourcesInSource[i].draft;
+        this.ZendeskResources[resourcesInSource[i].id].url = resourcesInSource[i].html_url || resourcesInSource[i].url;
+        this.ZendeskResources[resourcesInSource[i].id].draft = this.ZendeskResources[resourcesInSource[i].id].draft || resourcesInSource[i].draft;
         // this.ZendeskResources[resourcesInSource[i].id].completed = resourcesInSource[i].completed;
-        this.ZendeskResources[resourcesInSource[i].id].targetPublished = false;
+        this.ZendeskResources[resourcesInSource[i].id].targetPublished = this.ZendeskResources[resourcesInSource[i].id].targetPublished || false;
         this.ZendeskResources[resourcesInSource[i].id].targetOutdated = false;
         this.ZendeskResources[resourcesInSource[i].id].parentId = resourcesInSource[i].section_id || resourcesInSource[i].category_id;
         //Get parent section
-        if (this.pageType !== 'categories') {
+        if (this.pageType !== 'categories' && this.pageType !== 'dynamic_content') {
           if (this.pageType === 'articles') {
             var parentSectionResponse = await this.client.request({
               type: 'GET',
@@ -443,37 +538,45 @@ class NavBar {
 
   async getPublishedZendeskArticles() {
     try {
-      var publishedResourcesResponse = await this.client.request({
+      var publishedResourcesRequest = {
+        headers: {"Authorization": `Bearer ${this.oAuthToken}`},
         type: 'GET',
         dataType: 'json',
-        cors: true,
-        url: `${this.zendeskBaseUrl}/api/v2/help_center/${this.zendeskLocale}/${this.pageType}.json?page=${this.pageNumber}&per_page=${this.limit}&offset=${this.offset}&sort_by=updated_at&sort_order=desc`,
-        headers: {"Authorization": `Bearer ${this.oAuthToken}`}
-      })
-      var publishedResources = publishedResourcesResponse.articles || publishedResourcesResponse.categories || publishedResourcesResponse.sections;
-      for (var j = 0; j < publishedResources.length; j++) {
-        var currentId = publishedResources[j].id;
-        this.ZendeskResources[currentId].targetPublished = true;
+        cors: true
       }
+      if (this.pageType !== 'dynamic_content') {
+        publishedResourcesRequest.url = `${this.zendeskBaseUrl}/api/v2/help_center/${this.zendeskLocale}/${this.pageType}.json?page=${this.pageNumber}&per_page=${this.limit}&offset=${this.offset}&sort_by=updated_at&sort_order=desc`;
+        var publishedResourcesResponse = await this.client.request(publishedResourcesRequest);
+        var publishedResources = publishedResourcesResponse.articles || publishedResourcesResponse.categories || publishedResourcesResponse.sections;
+        for (var j = 0; j < publishedResources.length; j++) {
+          var currentId = publishedResources[j].id;
+          this.ZendeskResources[currentId].targetPublished = true;
+        }
+      }
+      // else {
+      //   publishedResourcesRequest.url = `${this.zendeskBaseUrl}/api/v2/${this.pageType}/items.json?page=${this.pageNumber}&per_page=${this.limit}&offset=${this.offset}&sort_by=updated_at&sort_order=desc`;
+      // }
     }
     catch(err) {
       this.client.invoke('notify', `Found no published ${this.pageType} for this locale`, 'alert', 10000)
     }
+
   }
 
 
   async setZendeskPageParams() {
 
-    this.pageParams.activeLanguages = [];
+    this.pageParams.activeLanguages = {};
 
     for (var i = 0; i < this.localeData.locales.length; i++) {
       var foundMatchInQProj = false;
-      var zendeskLocale = this.localeData.locales[i];
+      var zendeskLocale = this.localeData.locales[i].locale.toLowerCase();
+      console.log('zendesk locale', zendeskLocale)
       if (zendeskLocale !== this.sourceLocale) {
         if (this.qordobaProjectActiveLanguages[zendeskLocale]){
           //full match
           foundMatchInQProj = true;
-          var pageLangObj = {name: zendeskLocale, fullName: this.qordobaProjectActiveLanguages[zendeskLocale].fullName, zendeskLocale: zendeskLocale};
+          var pageLangObj = {name: zendeskLocale, fullName: this.qordobaProjectActiveLanguages[zendeskLocale].fullName, zendeskLocale: zendeskLocale, zendeskLocaleId: this.localeData.locales[i].id};
           if (zendeskLocale === `${this.langCode}-${this.localeCode}`) {
             pageLangObj.selected = true;
           } else {
@@ -482,12 +585,12 @@ class NavBar {
           if (!this.pageParams.currentLanguageLocale) {
             this.pageParams.currentLanguageLocale = zendeskLocale;
           }
-          this.pageParams.activeLanguages.push(pageLangObj);
+          this.pageParams.activeLanguages[this.localeData.locales[i].id] = pageLangObj;
         }
         else if (this.qordobaProjectActiveLanguages[`${zendeskLocale}-int`]) {
           //partial match -- `-int`
           foundMatchInQProj = true;
-          var pageLangObj = {name: `${zendeskLocale}-int`, fullName: this.qordobaProjectActiveLanguages[`${zendeskLocale}-int`].fullName, zendeskLocale: zendeskLocale};
+          var pageLangObj = {name: `${zendeskLocale}-int`, fullName: this.qordobaProjectActiveLanguages[`${zendeskLocale}-int`].fullName, zendeskLocale: zendeskLocale, zendeskLocaleId: this.localeData.locales[i].id};
           if (zendeskLocale === `${this.langCode}`) {
             pageLangObj.selected = true;
           } else {
@@ -496,11 +599,11 @@ class NavBar {
           if (!this.pageParams.currentLanguageLocale) {
             this.pageParams.currentLanguageLocale = `${zendeskLocale}-int`;
           }
-          this.pageParams.activeLanguages.push(pageLangObj);
+          this.pageParams.activeLanguages[this.localeData.locales[i].id] = pageLangObj;
         }
         if (!foundMatchInQProj) {
           //no match
-          this.client.invoke('notify', `Found no match for language code "${this.localeData.locales[i]}" in Qordoba project.`, 'alert', 10000)
+          this.client.invoke('notify', `Found no match for language code "${this.localeData.locales[i].locale}" in Qordoba project.`, 'alert', 10000)
           var pageLangObj = {name: zendeskLocale, fullName: `${zendeskLocale} (no match)`, zendeskLocale: zendeskLocale, selected: false};
           this.pageParams.zendeskLocalesNotPartOfQordobaProject = [];
           this.pageParams.zendeskLocalesNotPartOfQordobaProject.push(pageLangObj)
@@ -616,13 +719,22 @@ class NavBar {
 
     var filesToUpload = [];
 
+    console.log('FILES TO PROCESS', this.filesToProcess)
+
     for (var key in this.filesToProcess) {
       try {
-        await this.getZendeskResourceDetail(this.filesToProcess[key].title, key);
-        if (this.pageType !== 'categories') {
+        if (this.pageType !== 'dynamic_content') {
+          await this.getZendeskResourceDetail(this.filesToProcess[key].title, key);
+        }
+        else {
+          this.filesToProcess[key].project_id = this.qordobaProjectId;
+          this.filesToProcess[key].file = this.ZendeskResources[key].body;
+        }
+        if (this.pageType !== 'categories' && this.pageType !== 'dynamic_content') {
           var fileToUpload = new File([this.filesToProcess[key].file], `${this.filesToProcess[key].title}__${key} (${this.ZendeskResources[key].parent}).html`, {
             type: "text/html"
           })
+          console.log('FILE TO UPLOAD', fileToUpload)
         }
         else {
           var fileToUpload = new File([this.filesToProcess[key].file], `${this.filesToProcess[key].title}__${key}.html`, {
@@ -758,9 +870,10 @@ class NavBar {
       resourceStatusErrorSpan.dataset.resourceName = resourceName;
       var resourceCheckBox = listRowElement.children[0].children[0].children[0].children[0].children[0].children[0];
       resourceCheckBox.dataset.resourceName = resourceName;
-      var resourceLink = listRowElement.children[0].children[0].children[2].children[1];
+      if (this.pageType !== 'dynamic_content') {
+        var resourceLink = listRowElement.children[0].children[0].children[2].children[1];
+      }
       // var selectAllCheckbox = document.querySelector('.js-select-all');
-
       resourceCheckBox.addEventListener('click', (e) => {
         var uploadButton = document.querySelector('.js-batch-upload');
         var publishButton = document.querySelector('.js-publish');
@@ -875,7 +988,9 @@ class NavBar {
 
 
       if (!this.qordobaData[resourceId]) {
-        resourceLink.disabled = true;
+        if (this.pageType !== 'dynamic_content') {
+          resourceLink.disabled = true;
+        }
         //Resource isnt in Qordoba
 
         //Resource Status
@@ -891,7 +1006,9 @@ class NavBar {
 
       else if (this.qordobaData[resourceId].completed && this.qordobaData[resourceId].enabled) {
         // resourceLink.href = this.ZendeskResources[resourceId].url.replace(this.sourceLocale, this.zendeskLocale);
-        resourceLink.disabled = false;
+        if (this.pageType !== 'dynamic_content') {
+          resourceLink.disabled = false;
+        }
         resourceStatusCompletedSpan.classList.remove('is-hidden');
         resourceStatusNotExistSpan.classList.add('is-hidden');
         resourceStatusCheckingSpan.classList.add('is-hidden');
@@ -901,7 +1018,9 @@ class NavBar {
       }
 
       else if (this.qordobaData[resourceId].enabled) {
-        resourceLink.disabled = true;
+        if (this.pageType !== 'dynamic_content') {
+          resourceLink.disabled = true;
+        }
         resourceStatusInProgressSpan.classList.remove('is-hidden');
         resourceStatusNotExistSpan.classList.add('is-hidden');
         resourceStatusCheckingSpan.classList.add('is-hidden');
@@ -979,7 +1098,7 @@ class NavBar {
         pageTypeNodes[i].addEventListener('click', (e) => {
           this.view.switchTo('loading');
           this.pageNumber = 1;
-          this.pageType = e.target.innerText.toLowerCase();
+          this.pageType = e.target.innerText.toLowerCase().replace(' ','_');
           this.zendeskSearchTerm = '';
           this.init();
         });
@@ -1005,8 +1124,19 @@ class NavBar {
         this.init();
       });
 
+      var foundDropdownItem = false;
+      var dropdownIndex = 0;
+      while (!foundDropdownItem) {
+        if (localeDropdown.options[dropdownIndex].classList.contains(`${this.langCode}-${this.localeCode}`)) {
+          foundDropdownItem = true;
+          this.dropdownIndexForTargetLanguage = dropdownIndex;
+        }
+        else {
+          dropdownIndex++;
+        }
+      }
 
-      localeDropdown.options.selectedIndex = this.dropdownIndexForTargetLanguage
+      localeDropdown.options.selectedIndex = this.dropdownIndexForTargetLanguage;
       localeDropdown.classList.add('selected-locale');
       localeDropdown.addEventListener('change', (e) => {
         var targetRow = e.target.querySelector(`option.${e.target.value}`)
@@ -1057,9 +1187,16 @@ class NavBar {
   //************ZENDESK UTILITIES***********************
 
   reconstructZendeskResourcesObject(dataObject, key) {
+    console.log('DATAOBJ', dataObject)
+    var isDynamicContent = false;
     var qordobaPublished = this.qordobaData[key] || {completed: false};
     var targetUrl = dataObject.url.replace(this.sourceLocale, this.zendeskLocale);
     if (this.pageType === 'articles') {
+      var sourceAdminUrl = `${this.client._origin}/knowledge/${this.pageType}/${key}/${this.sourceLocale}?brand_id=${this.currentZendeskBrand}`;
+      var targetAdminUrl = `${this.client._origin}/knowledge/${this.pageType}/${key}/${this.zendeskLocale}?brand_id=${this.currentZendeskBrand}`;
+    }
+    else if (this.pageType === 'dynamic_content') {
+      isDynamicContent = true;
       var sourceAdminUrl = `${this.client._origin}/knowledge/${this.pageType}/${key}/${this.sourceLocale}?brand_id=${this.currentZendeskBrand}`;
       var targetAdminUrl = `${this.client._origin}/knowledge/${this.pageType}/${key}/${this.zendeskLocale}?brand_id=${this.currentZendeskBrand}`;
     }
@@ -1067,7 +1204,7 @@ class NavBar {
       var sourceAdminUrl = `${this.client._origin}/hc/admin/${this.pageType}/${key}/edit`;
       var targetAdminUrl = sourceAdminUrl + `?translation_locale=${this.zendeskLocale}`;
     }
-    if (this.pageType !== 'categories') {
+    if (this.pageType !== 'categories' && this.pageType !== 'dynamic_content') {
       var titleString = `${dataObject.title} (${dataObject.parent})`;
     } 
     else {
@@ -1086,6 +1223,7 @@ class NavBar {
       fullName: this.qordobaLanguageFullName,
       target_url: targetUrl,
       target_url_admin: targetAdminUrl,
+      dynamic_content: isDynamicContent
     }
   }
 

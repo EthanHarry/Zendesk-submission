@@ -82,6 +82,12 @@
         <a tab="categories" class="o-tabs__item" href="#">Categories</a>
         {{/if}}
 
+        {{#if page_dynamic_content}}
+        <a class="o-tabs__item is-active" href="#">Dynamic Content</a>
+        {{else}}
+        <a tab="dynamic_content" class="o-tabs__item" href="#">Dynamic Content</a>
+        {{/if}}
+
 
       </div>
     </div>
@@ -220,7 +226,11 @@
           </span>
         </div>
 
-        <div class="u-width-20 u-paddingHorizontal-1x u-textAlign-center u-float-left">Links</div>
+        {{#if page_dynamic_content}}
+          <div class="u-width-20 u-paddingHorizontal-1x u-textAlign-center u-float-left">Translation Published?</div>
+        {{else}}
+          <div class="u-width-20 u-paddingHorizontal-1x u-textAlign-center u-float-left">Links</div>
+        {{/if}}
 
         <div class="u-width-20 u-paddingHorizontal-1x u-textAlign-center u-float-left">Original Published?</div>
 
@@ -252,14 +262,14 @@
             </div>
             <div class="o-text-ellipsis u-width-15 u-paddingHorizontal-1x u-textAlign-left">
               <span class="u-color-secondary u-fontSize-small">
-              {{#if this.zd_outdated}}
-                <span data-toggle="tooltip" title="This dynamic content item has been updated since it was last sent to Qordoba.">
-                  <svg class="o-icon u-marginRight-1x u-fill-systemWarning" viewBox="0 0 16 16">
-                    <path class="path1" d="M15.704 12.642l-6.321-10.864c-0.296-0.494-0.79-0.79-1.383-0.79s-1.086 0.296-1.383 0.79l-6.321 10.864c-0.296 0.494-0.296 1.086 0 1.58s0.79 0.79 1.383 0.79h12.642c0.593 0 1.086-0.296 1.383-0.79s0.296-1.086 0-1.58zM1.679 13.432l6.321-10.864 6.321 10.963-12.642-0.099z"></path>
-                    <path class="path2" d="M7.21 5.827v4.049h1.58v-4.049h-1.58z"></path>
-                    <path class="path3" d="M8.79 11.457c0 0.436-0.354 0.79-0.79 0.79s-0.79-0.354-0.79-0.79c0-0.436 0.354-0.79 0.79-0.79s0.79 0.354 0.79 0.79z"></path>
-                  </svg>
-                </span>
+                {{#if this.zd_outdated}}
+                  <span data-toggle="tooltip" title="This dynamic content item has been updated since it was last sent to Qordoba.">
+                    <svg class="o-icon u-marginRight-1x u-fill-systemWarning" viewBox="0 0 16 16">
+                      <path class="path1" d="M15.704 12.642l-6.321-10.864c-0.296-0.494-0.79-0.79-1.383-0.79s-1.086 0.296-1.383 0.79l-6.321 10.864c-0.296 0.494-0.296 1.086 0 1.58s0.79 0.79 1.383 0.79h12.642c0.593 0 1.086-0.296 1.383-0.79s0.296-1.086 0-1.58zM1.679 13.432l6.321-10.864 6.321 10.963-12.642-0.099z"></path>
+                      <path class="path2" d="M7.21 5.827v4.049h1.58v-4.049h-1.58z"></path>
+                      <path class="path3" d="M8.79 11.457c0 0.436-0.354 0.79-0.79 0.79s-0.79-0.354-0.79-0.79c0-0.436 0.354-0.79 0.79-0.79s0.79 0.354 0.79 0.79z"></path>
+                    </svg>
+                  </span>
                 {{else}}
                 <svg class="o-icon u-marginRight-1x" viewBox="0 0 16 16">
                   <path class="path1" d="M8 0.020q3.316 0 5.658 2.342t2.342 5.639-2.342 5.639-5.658 2.342-5.658-2.342-2.342-5.639 2.342-5.639 5.658-2.342zM8 14.407q2.641 0 4.515-1.873t1.873-4.534-1.873-4.534-4.515-1.873-4.515 1.873-1.873 4.534 1.873 4.534 4.515 1.873zM8.393 3.991v4.196l3.597 2.136-0.599 1.012-4.196-2.548v-4.796h1.199z"></path>
@@ -268,35 +278,49 @@
                 {{{this.zd_object_updated}}}
               </span>
             </div>
-            <div class="o-text-ellipsis u-width-20 u-paddingHorizontal-1x u-textAlign-center">
-              <a class="o-link u-fontSize-small" target="_blank" href="{{{this.source_url}}}">
-                Original
-              </a>
-              <a class="o-link u-fontSize-small" target="_blank" href="{{{this.source_url_admin}}}">
-                <b>(Admin)</b>
-              </a>
-              |
-              {{#if this.target_published}}
-                <a href="{{{this.target_url}}}" class="o-link u-fontSize-small" data-status="found" target="_blank" data-toggle="tooltip" title="Translated name">Translated</a>
-                <a class="o-link u-fontSize-small" target="_blank" href="{{{this.target_url_admin}}}">
+            {{#if this.dynamic_content}}
+              <div class="o-text-ellipsis u-width-20 u-paddingHorizontal-1x u-textAlign-center">
+                {{#if this.target_published}}
+                  <span id="locales-{{{this.name}}}">
+                    <span class="u-color-primary u-fontSize-medium"><span>✔</span></span>
+                  </span>
+                {{else}}
+                  <span id="locales-{{{this.name}}}">
+                    <span class="u-color-primary u-fontSize-medium"><span class="u-color-disabled">-</span></span>
+                  </span>
+                {{/if}}
+              </div>
+            {{else}}
+              <div class="o-text-ellipsis u-width-20 u-paddingHorizontal-1x u-textAlign-center">
+                <a class="o-link u-fontSize-small" target="_blank" href="{{{this.source_url}}}">
+                  Original
+                </a>
+                <a class="o-link u-fontSize-small" target="_blank" href="{{{this.source_url_admin}}}">
                   <b>(Admin)</b>
                 </a>
-              {{else}}
-                  <span class="u-color-disabled u-fontSize-small" data-status="not_found">Translated</span>
-                  <span class="u-color-disabled u-fontSize-small" data-status="not_found"><b>(Admin)</b></span>
-              {{/if}}
-            </div>
-            <div class="o-text-ellipsis u-width-20 u-paddingHorizontal-1x u-textAlign-center">
-              {{#if this.source_published}}
-              <span id="locales-{{{this.name}}}">
-                <span class="u-color-primary u-fontSize-medium"><span>✔</span></span>
-              </span>
-              {{else}}
-              <span id="locales-{{{this.name}}}">
-                <span class="u-color-primary u-fontSize-medium"><span class="u-color-disabled">-</span></span>
-              </span>
-              {{/if}}
-            </div>
+                |
+                {{#if this.target_published}}
+                  <a href="{{{this.target_url}}}" class="o-link u-fontSize-small" data-status="found" target="_blank" data-toggle="tooltip" title="Translated name">Translated</a>
+                  <a class="o-link u-fontSize-small" target="_blank" href="{{{this.target_url_admin}}}">
+                    <b>(Admin)</b>
+                  </a>
+                {{else}}
+                    <span class="u-color-disabled u-fontSize-small" data-status="not_found">Translated</span>
+                    <span class="u-color-disabled u-fontSize-small" data-status="not_found"><b>(Admin)</b></span>
+                {{/if}}
+              </div>
+            {{/if}}
+              <div class="o-text-ellipsis u-width-20 u-paddingHorizontal-1x u-textAlign-center">
+                {{#if this.source_published}}
+                <span id="locales-{{{this.name}}}">
+                  <span class="u-color-primary u-fontSize-medium"><span>✔</span></span>
+                </span>
+                {{else}}
+                <span id="locales-{{{this.name}}}">
+                  <span class="u-color-primary u-fontSize-medium"><span class="u-color-disabled">-</span></span>
+                </span>
+                {{/if}}
+              </div>
             <div class="o-text-ellipsis u-flexGrow-1 u-paddingHorizontal-1x u-textAlign-center">
               <span class="u-color-secondary u-fontSize-small" data-status="checking"><span class="u-color-disabled">Checking...</span></span>
               <span class="o-badge u-backgroundColor-success is-hidden" data-status="completed">Completed</span>

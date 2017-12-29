@@ -1,6 +1,3 @@
-<div class="inner-loading-div">
-  <img class="loading-img" src="../images/spinner.gif" alt="loading..." />
-</div>
 <a id="start-auth" href='https://us-central1-qordoba-devel.cloudfunctions.net/qordoba-zendesk-zendesk_auth?initial_brand_name={{initial_brand_name}}&client_id={{client_id}}' target="_blank">
   Start Zendesk Auth
 </a> 
