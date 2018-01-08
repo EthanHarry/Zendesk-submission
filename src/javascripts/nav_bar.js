@@ -13,11 +13,13 @@ const MAX_HEIGHT = 375;
 //TODO
 //TODO
 //TODO
-//Biggest problem -- how do we persist spaces?
-  //Wrap everything in a <p> tag?
+//Biggest problem -- how do we persist spaces? And create segmentation?
+  //Use 'br' and 'nbsp' to maintain layout
+  //Add them on the FE, and then parse it back to \n or ' ' when returned
+  //Lets look at underlying HTML?
+  //Make sure whatever I do works IF there is existing HTML code in the dynamic content
 
-  //Dynamic content items and variants dont have their own URLs. Need to add div in dynamic content explaining this and linking to `/agent/admin/dynamic_content`
-  //Investigate dif markup types available in dynamic content -- right now just wrapping in HTML and BODY tags
+  //Styling on dynamic content info div
 
   //FUTURE
   //Dont call for languages and brands every time we re-init -- you already have them
@@ -176,7 +178,7 @@ class NavBar {
         this.qordobaLanguageId = qordobaLanguageIdObj.id;
         this.qordobaLanguageFullName = qordobaLanguageIdObj.fullName;
       }
-      else {
+      else if (!this.userNotLoggedIn) {
         this.client.invoke('notify', 'Error matching languages to Qordoba. Please confirm all languages in Zendesk match a language-locale in Qordoba', 'error', 10000)
       }
     }
@@ -395,6 +397,7 @@ class NavBar {
           this.currentZendeskBrand = this.currentZendeskBrand || currentZendeskBrands.brands[i].id;
           this.currentZendeskBrandIndex = this.currentZendeskBrandIndex || i + 1;
           this.zendeskBaseUrl = this.zendeskBaseUrl || currentZendeskBrands.brands[i].brand_url;
+          this.pageParams.dynamic_content_url = `${this.zendeskBaseUrl}/agent/admin/dynamic_content`;
         }
         this.zendeskBrands[currentZendeskBrands.brands[i].id] = {};
         this.zendeskBrands[currentZendeskBrands.brands[i].id].id = currentZendeskBrands.brands[i].id;
@@ -613,7 +616,7 @@ class NavBar {
           }
           this.pageParams.activeLanguages[this.localeData.locales[i].id] = pageLangObj;
         }
-        if (!foundMatchInQProj) {
+        if (!foundMatchInQProj && !this.userNotLoggedIn) {
           //no match
           this.client.invoke('notify', `Found no match for language code "${this.localeData.locales[i].locale}" in Qordoba project.`, 'alert', 10000)
           var pageLangObj = {name: zendeskLocale, fullName: `${zendeskLocale} (no match)`, zendeskLocale: zendeskLocale, selected: false};
@@ -657,7 +660,14 @@ class NavBar {
       }
     }
     catch(err) {
-      this.client.invoke('notify', `Error retrieving Qordoba languages.`, 'error', 10000)
+      console.log('ERR', err)
+      if (err.responseJSON.errMessage === 'You are not logged in.') {
+        this.client.invoke('notify', `Your Authentication Token is no longer valid. Please get a new token from the Settings of your Qordoba project and update the App Configuration here in Zendesk.`, 'error', 10000)
+        this.userNotLoggedIn = true;
+      }
+      else {
+        this.client.invoke('notify', `Error retrieving Qordoba languages.`, 'error', 10000)
+      }
     }
   }
 
@@ -684,14 +694,16 @@ class NavBar {
           this.qordobaData[resourceId].lastUpdatedAt = qordobaResponse.pages[0].update;
           this.qordobaData[resourceId].title = resourceName;
         }
-        else if (qordobaResponse.pages.length > 1) {
+        else if (qordobaResponse.pages.length > 1 && !this.userNotLoggedIn) {
           this.client.invoke('notify', `Found multiple matches for this page in Qordoba. Please check your Qordoba project and confirm any duplicates.`, 'error', 10000)
           throw new Error('Found multiple matches for this page in Qordoba. Please check your Qordoba project and confirm any duplicates')
         }
       }
     }
     catch(err) {
+      if (!this.userNotLoggedIn) {
       this.client.invoke('notify', `Error retrieving Qordoba ${this.pageType}.`, 'error', 10000)
+      }
     }
   }
 
@@ -719,8 +731,10 @@ class NavBar {
       await this.publishZendeskResources(completeZipFile); //TODO move so we dont call from in here
     }
     catch(err) {
-      throw new Error ('error downloading files', err)
-      this.client.invoke('notify', `Error downloading files from Qordoba.`, 'error', 10000);
+      if (!this.userNotLoggedIn) {
+        throw new Error ('error downloading files', err)
+        this.client.invoke('notify', `Error downloading files from Qordoba.`, 'error', 10000);
+      }
     }
   }
 
@@ -1190,8 +1204,10 @@ class NavBar {
       }
     }
     catch(err) {
-      this.client.invoke('notify', 'Error setting page statuses', 'error', 10000)
-      throw new Error('Error setting page statuses', err)
+      if (!this.userNotLoggedIn) {
+        this.client.invoke('notify', 'Error setting page statuses', 'error', 10000)
+        throw new Error('Error setting page statuses', err)
+      }
     }
   }
 
