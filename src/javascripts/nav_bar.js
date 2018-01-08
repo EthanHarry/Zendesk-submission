@@ -13,10 +13,11 @@ const MAX_HEIGHT = 375;
 //TODO
 //TODO
 //TODO
-  //In order to send dynamic content to qordoba, we're wrapping it in some HTML tags. Need to "unwrap" in translated content before we publish
+//Biggest problem -- how do we persist spaces?
+  //Wrap everything in a <p> tag?
+
   //Dynamic content items and variants dont have their own URLs. Need to add div in dynamic content explaining this and linking to `/agent/admin/dynamic_content`
   //Investigate dif markup types available in dynamic content -- right now just wrapping in HTML and BODY tags
-  //Look at whether we even need getZendeskDetial for help center stuff -- pretty sure we already have everything we need in this.zendeskResources
 
   //FUTURE
   //Dont call for languages and brands every time we re-init -- you already have them
@@ -248,7 +249,6 @@ class NavBar {
         console.log('qordobaData', this.qordobaData)
         if (this.qordobaData[resourceId] && this.qordobaData[resourceId].completed && (key.slice(0,5) === `${this.langCode}-${this.localeCode}` || key.slice(0,6) === `${this.langCode}-${this.localeCode}`)) {
           var finalizedZipData = await completedZipData[key].async('text');
-          console.log('finalizedZipData', finalizedZipData)
           if (this.pageType === 'dynamic_content') {
             for (var key in this.pageParams.activeLanguages) {
               if (this.zendeskLocale === this.pageParams.activeLanguages[key].zendeskLocale) {
@@ -256,7 +256,11 @@ class NavBar {
                 break;
               }
             }
-            translateDynamicContentRequest = {
+            var macroContentRegex = /(<([^>]+)>)/ig;
+            var macroContent = finalizedZipData.replace(macroContentRegex, "")
+            finalizedZipData = macroContent;
+            console.log('finalizedZipData', finalizedZipData)
+            var translateDynamicContentRequest = {
               variant: {
                 locale_id: localeId,
                 active: true, //TODO confirm this is ok and see what it means
@@ -293,19 +297,27 @@ class NavBar {
           }
           if (this.ZendeskResources[resourceId]) {
             try {
-              var checkResourceRequest = {
+              var checkOrCreateResourceRequest = {
                 cors: true
               }
               if (this.pageType !== 'dynamic_content') {
-                checkResourceRequest.url = `${this.zendeskBaseUrl}/api/v2/help_center/${this.pageType}/${resourceId}/translations/${this.zendeskLocale}.json`;
-                checkResourceRequest.type = 'GET';
+                checkOrCreateResourceRequest.url = `${this.zendeskBaseUrl}/api/v2/help_center/${this.pageType}/${resourceId}/translations/${this.zendeskLocale}.json`;
+                checkOrCreateResourceRequest.type = 'GET';
+              }
+              else if (!this.ZendeskResources[resourceId].targetPublished) {
+                checkOrCreateResourceRequest.url = `${this.zendeskBaseUrl}/api/v2/${this.pageType}/items/${resourceId}/variants.json`;
+                checkOrCreateResourceRequest.type = 'POST';
+                checkOrCreateResourceRequest.data = translateDynamicContentRequest;
               }
               else {
-                checkResourceRequest.url = `${this.zendeskBaseUrl}/api/v2/${this.pageType}/items/${resourceId}/variants.json`;
-                checkResourceRequest.type = 'POST';
-                checkResourceRequest.data = translateDynamicContentRequest;
+                var variantId = this.zendeskResources[resourceId].variantId;
+                checkOrCreateResourceRequest.url = `${this.zendeskBaseUrl}/api/v2/${this.pageType}/items/${resourceId}/variants/${variantId}.json`;
+                checkOrCreateResourceRequest.type = 'PUT';
+                checkOrCreateResourceRequest.data = translateDynamicContentRequest;
               }
-              var resourceExists = await this.client.request(checkResourceRequest);
+
+              var resourceExists = await this.client.request(checkOrCreateResourceRequest);
+              console.log('RESOURCE CHECK RESULT', resourceExists)
 
               // this.client.invoke('notify', `Found existing ${this.pageType}.`, 'alert', 10000)
 
@@ -481,10 +493,13 @@ class NavBar {
           console.log('dynamic content ITEM DETAIL', itemDetail)
           for (var j = 0; j < itemDetail.item.variants.length; j++) {
             if (itemDetail.item.variants[j].default) {
-              this.ZendeskResources[resourcesInSource[i].id].body = `<html><body>${itemDetail.item.variants[j].content}</body></html>`;
+              // this.ZendeskResources[resourcesInSource[i].id].body = `<html><body>${itemDetail.item.variants[j].content}</body></html>`;
+              this.ZendeskResources[resourcesInSource[i].id].body = itemDetail.item.variants[j].content;
+              console.log('BODY', this.ZendeskResources[resourcesInSource[i].id].body)
             }
             else if (this.pageParams.activeLanguages[itemDetail.item.variants[j].locale_id] && this.pageParams.activeLanguages[itemDetail.item.variants[j].locale_id].zendeskLocale === this.zendeskLocale) {
               this.ZendeskResources[resourcesInSource[i].id].targetPublished = true;
+              this.ZendeskResources[resourcesInSource[i].id].variantId = itemDetail.item.variants[j];
             }
           }
         }
