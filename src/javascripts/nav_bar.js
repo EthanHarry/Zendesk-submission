@@ -12,11 +12,12 @@ const MAX_HEIGHT = 375;
 //TODO
 //TODO
 //TODO
-//TODO
+//TODO 
+
+//PICK UP ON LINE 269 -- FIGURING OUT HOW TO GET RID OF LEADING DOUBLE SPACES
+
+
 //Biggest problem -- how do we persist spaces? And create segmentation?
-  //Use 'br' and 'nbsp' to maintain layout
-  //Add them on the FE, and then parse it back to \n or ' ' when returned
-  //Lets look at underlying HTML?
   //Make sure whatever I do works IF there is existing HTML code in the dynamic content
 
   //Styling on dynamic content info div
@@ -258,10 +259,22 @@ class NavBar {
                 break;
               }
             }
-            var macroContentRegex = /(<([^>]+)>)/ig;
-            var macroContent = finalizedZipData.replace(macroContentRegex, "")
-            finalizedZipData = macroContent;
-            console.log('finalizedZipData', finalizedZipData)
+            if (!this.ZendeskResources[resourceId].includesHTML) {
+              var bodyContentRegex = /<body[^>]*>\n((.|[\n\r])*)<\/body>/im;
+              var bodyMatches = bodyContentRegex.exec(finalizedZipData);
+              console.log('BODY MATCHES', bodyMatches)
+              finalizedZipData = bodyMatches[1];
+              console.log('BEFORE REPLACE!!!!!!!!!', finalizedZipData)
+              finalizedZipData = finalizedZipData.replace(/(<([^>]+)>)/ig, "")
+              finalizedZipData = finalizedZipData.replace(/&nbsp;/ig, " ")
+              // var leadingSpacesRegex = /(  ).*/g;
+              // var leadingSpacesMatches = leadingSpacesRegex.exec(finalizedZipData);
+              console.log('AFTER REPLACE!!!!!!!!!', finalizedZipData)
+            }
+            else {
+              
+            }
+            // console.log('finalizedZipData', finalizedZipData)
             var translateDynamicContentRequest = {
               variant: {
                 locale_id: localeId,
@@ -496,8 +509,18 @@ class NavBar {
           console.log('dynamic content ITEM DETAIL', itemDetail)
           for (var j = 0; j < itemDetail.item.variants.length; j++) {
             if (itemDetail.item.variants[j].default) {
-              // this.ZendeskResources[resourcesInSource[i].id].body = `<html><body>${itemDetail.item.variants[j].content}</body></html>`;
-              this.ZendeskResources[resourcesInSource[i].id].body = itemDetail.item.variants[j].content;
+              var regexCheckForHTML = /(<([^>]+)>)/ig;
+              var regexHTMLMatches = regexCheckForHTML.exec(itemDetail.item.variants[j].content);
+              console.log('regexHTMLMatches!!!!!', regexHTMLMatches)
+              if (!regexHTMLMatches) {
+                this.ZendeskResources[resourcesInSource[i].id].body = `<html><body>${itemDetail.item.variants[j].content}</body></html>`;
+                this.ZendeskResources[resourcesInSource[i].id].body = itemDetail.item.variants[j].content.replace(/\n/g, '<br>');
+                this.ZendeskResources[resourcesInSource[i].id].includesHTML = false;
+              }
+              else {
+                this.ZendeskResources[resourcesInSource[i].id].body = itemDetail.item.variants[j].content;
+                this.ZendeskResources[resourcesInSource[i].id].includesHTML = true;
+              }
               console.log('BODY', this.ZendeskResources[resourcesInSource[i].id].body)
             }
             else if (this.pageParams.activeLanguages[itemDetail.item.variants[j].locale_id] && this.pageParams.activeLanguages[itemDetail.item.variants[j].locale_id].zendeskLocale === this.zendeskLocale) {
