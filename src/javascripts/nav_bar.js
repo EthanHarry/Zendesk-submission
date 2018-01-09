@@ -14,13 +14,8 @@ const MAX_HEIGHT = 375;
 //TODO
 //TODO 
 
-//PICK UP ON LINE 269 -- FIGURING OUT HOW TO GET RID OF LEADING DOUBLE SPACES
-
-
-//Biggest problem -- how do we persist spaces? And create segmentation?
-  //Make sure whatever I do works IF there is existing HTML code in the dynamic content
-
-  //Styling on dynamic content info div
+//Fix "Found no match for en-us" error 
+//Styling on dynamic content info div
 
   //FUTURE
   //Dont call for languages and brands every time we re-init -- you already have them
@@ -265,8 +260,9 @@ class NavBar {
               console.log('BODY MATCHES', bodyMatches)
               finalizedZipData = bodyMatches[1];
               console.log('BEFORE REPLACE!!!!!!!!!', finalizedZipData)
-              finalizedZipData = finalizedZipData.replace(/(<([^>]+)>)/ig, "")
-              finalizedZipData = finalizedZipData.replace(/&nbsp;/ig, " ")
+              finalizedZipData = finalizedZipData.replace(/(<([^>]+)>)/ig, "");
+              finalizedZipData = finalizedZipData.replace(/&nbsp;/ig, " ");
+              finalizedZipData = finalizedZipData.replace(/^  /gm, "");
               // var leadingSpacesRegex = /(  ).*/g;
               // var leadingSpacesMatches = leadingSpacesRegex.exec(finalizedZipData);
               console.log('AFTER REPLACE!!!!!!!!!', finalizedZipData)
