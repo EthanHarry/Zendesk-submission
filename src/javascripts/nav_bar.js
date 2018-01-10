@@ -14,7 +14,6 @@ const MAX_HEIGHT = 375;
 //TODO
 //TODO 
 
-//Fix "Found no match for en-us" error 
 //Styling on dynamic content info div
 
   //FUTURE
@@ -30,8 +29,6 @@ const MAX_HEIGHT = 375;
   //Bring back select all checkbox and determine behavior
   //Qordoba auth -- make dynamic -- add token on proj creation instead of username pw
   //Implement sortable fields
-  //New lang-locale mappings?
-  //X-AUTH-TOKEN expiry -- can we actually use it during install? Won't it expire when user terminates session? TEST
 
 
 class NavBar {
@@ -437,12 +434,13 @@ class NavBar {
       })
       for (var i = 0; i < this.localeData.locales.length; i++) {
         if (this.localeData.locales[i].default) {
-          this.localeData.locales.splice(i,1);
+          var sourceLocaleObj = this.localeData.locales.splice(i,1)[0];
+          console.log('source locale obj', sourceLocaleObj)
+          this.sourceLocale = sourceLocaleObj.locale;
+          break;
         }
-        break;
       }
       console.log('LOCALE DATA', this.localeData)
-      this.sourceLocale = this.localeData.default_locale;
     }
     catch(err) {
       this.client.invoke('notify', `Error fetching and setting Zendesk project languages`, 'error', 10000)

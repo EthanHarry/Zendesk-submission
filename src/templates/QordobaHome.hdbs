@@ -21,11 +21,6 @@
                 {{/each}}
               </select>
             </div>
-            {{#if page_dynamic_content}}
-              <div>
-                <p>Note: you can see all Dynamic Content items and their variants in the <a target="_blank" href={{dynamic_content_url}}>Dynamic Content Dashboard</a></p>
-              </div>
-            {{/if}}    
             <div class="dropdown q-language-dropdown-container">
               <span class='u-color-primary q-dropdown-label-text'>Active Language</span>
               <select class="o-button dropdown-toggle active-locales" data-toggle="dropdown" href="#">
@@ -62,6 +57,11 @@
           </div>
 
         </div>
+        {{#if page_dynamic_content}}
+          <div class='q-dynamic-content-note'>
+            Note: you can see all Dynamic Content items and their variants in the <a target="_blank" href={{dynamic_content_url}}>Dynamic Content Dashboard</a>
+          </div>
+        {{/if}}    
       </div>
     </div>
 
