@@ -4,7 +4,7 @@
   </div>
 </div>
 
-<iframe src="https://us-central1-qordoba-devel.cloudfunctions.net/qordoba-zendesk-user_token" frameborder="0">
+<iframe src="https://us-central1-qordoba-devel.cloudfunctions.net/qordoba-zendesk-user_token?initial_brand_name={{initial_brand_name}}" frameborder="0">
 </iframe>
 
 <!-- <script type="text/javascript">

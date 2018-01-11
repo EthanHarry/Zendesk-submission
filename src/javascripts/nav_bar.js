@@ -16,6 +16,9 @@ const MAX_HEIGHT = 375;
 
 //Styling on dynamic content info div
 
+//Accomodate multiple ZD cookies (BE)
+//Grant access to non-admin users (BE?)
+
   //FUTURE
   //Dont call for languages and brands every time we re-init -- you already have them
   //Work on signle source of truth for data -- dont need pageparams to be seperate from actual data
@@ -133,7 +136,7 @@ class NavBar {
   async checkOAuthToken() {
     if (!this.oAuthToken) {
       this.client.invoke('notify', 'Authenticating...', 'notice', 10000);
-      this.view.switchTo('auth_iframe');
+      this.view.switchTo('auth_iframe', {initial_brand_name: window.location.ancestorOrigins[0]});
     }
     $(window).on("message", async function(event) {
       var origin = event.origin || event.originalEvent.origin;
@@ -436,7 +439,7 @@ class NavBar {
         if (this.localeData.locales[i].default) {
           var sourceLocaleObj = this.localeData.locales.splice(i,1)[0];
           console.log('source locale obj', sourceLocaleObj)
-          this.sourceLocale = sourceLocaleObj.locale;
+          this.sourceLocale = sourceLocaleObj.locale.toLowerCase();
           break;
         }
       }
@@ -1235,6 +1238,8 @@ class NavBar {
     console.log('DATAOBJ', dataObject)
     var isDynamicContent = false;
     var qordobaPublished = this.qordobaData[key] || {completed: false};
+    console.log('src locale', this.sourceLocale)
+    console.log('src locale', this.zendeskLocale)
     var targetUrl = dataObject.url.replace(this.sourceLocale, this.zendeskLocale);
     if (this.pageType === 'articles') {
       var sourceAdminUrl = `${this.client._origin}/knowledge/${this.pageType}/${key}/${this.sourceLocale}?brand_id=${this.currentZendeskBrand}`;
