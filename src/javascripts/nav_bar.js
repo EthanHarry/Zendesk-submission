@@ -14,9 +14,8 @@ const MAX_HEIGHT = 375;
 //TODO
 //TODO 
 
-//Styling on dynamic content info div
-
-//Accomodate multiple ZD cookies (BE)
+//Styling 
+  //Especially on "info" divs
 //Grant access to non-admin users (BE?)
 
   //FUTURE
@@ -144,19 +143,7 @@ class NavBar {
         return;
       var msg = event.data || event.originalEvent.data;
       if (msg.zendeskAuthToken === 'undefined') {
-        var clientsResponse = await this.client.request({
-          url: `${window.location.ancestorOrigins[0]}/api/v2/oauth/clients.json`,
-          type: 'GET',
-          cors: true
-        })
-        var clients = clientsResponse.clients;
-        for (var i = 0; i < clients.length; i++) {
-          if (clients[i].company === 'Qordoba') {
-            var clientId = clients[i].id;
-            break;
-          }
-        }
-        this.view.switchTo('start_auth', {initial_brand_name: window.location.ancestorOrigins[0], client_id: clientId});
+        this.view.switchTo('start_auth', {initial_brand_name: window.location.ancestorOrigins[0]});
       } else {
         this.oAuthToken = msg.zendeskAuthToken;
         this.init();
@@ -438,7 +425,6 @@ class NavBar {
       for (var i = 0; i < this.localeData.locales.length; i++) {
         if (this.localeData.locales[i].default) {
           var sourceLocaleObj = this.localeData.locales.splice(i,1)[0];
-          console.log('source locale obj', sourceLocaleObj)
           this.sourceLocale = sourceLocaleObj.locale.toLowerCase();
           break;
         }
