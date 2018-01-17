@@ -17,6 +17,7 @@ const MAX_HEIGHT = 375;
 //Styling 
   //Especially on "info" divs
 //Grant access to non-admin users (BE?)
+//Add fix to cast all locales to lower case
 
   //FUTURE
   //Dont call for languages and brands every time we re-init -- you already have them
